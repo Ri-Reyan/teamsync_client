@@ -121,7 +121,7 @@ export default function Footer() {
 
           <div className="flex items-center gap-3">
             <Link
-              href="https://github.com"
+              href="https://github.com/Ri-Reyan"
               target="_blank"
               rel="noopener noreferrer"
               className="border-2 border-black bg-white p-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-black hover:text-white transition-colors"
@@ -129,7 +129,7 @@ export default function Footer() {
               <span>Github</span>
             </Link>
             <Link
-              href="https://linkedin.com"
+              href="https://www.linkedin.com/in/i-reyannn"
               target="_blank"
               rel="noopener noreferrer"
               className="border-2 border-black bg-white p-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-black hover:text-white transition-colors"
@@ -137,7 +137,7 @@ export default function Footer() {
               <span>LinkedIn</span>
             </Link>
             <Link
-              href="https://instagram.com"
+              href="https://www.instagram.com/i.reyannn/?hl=en"
               target="_blank"
               rel="noopener noreferrer"
               className="border-2 border-black bg-white p-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-black hover:text-white transition-colors"
