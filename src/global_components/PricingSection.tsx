@@ -70,7 +70,6 @@ const pricingPlans: PricingTier[] = [
       "Unlimited team members",
       "Dedicated Database & SLA Guarantees",
       "Custom AI Model Fine-tuning",
-      "Advanced Security & SSO / SAML",
       "Dedicated Account Manager",
       "Custom Integrations & Audit Logs",
       "Custom Contract & Billing",

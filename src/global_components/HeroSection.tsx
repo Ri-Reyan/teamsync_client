@@ -76,7 +76,7 @@ export default function HeroSection() {
             </h3>
             <p className="font-bold text-sm text-black/80">
               Role-based access control (RBAC) keeping tenant data completely
-              isolated[cite: 1].
+              isolated.
             </p>
           </div>
 
@@ -93,7 +93,7 @@ export default function HeroSection() {
             </h3>
             <p className="font-bold text-sm text-black/80">
               Drag-and-drop task synchronization across all connected members
-              instantly[cite: 1].
+              instantly.
             </p>
           </div>
 
@@ -110,7 +110,7 @@ export default function HeroSection() {
             </h3>
             <p className="font-bold text-sm text-black/80">
               Auto-generate project digests from task comments and statuses in
-              seconds[cite: 1].
+              seconds.
             </p>
           </div>
         </div>

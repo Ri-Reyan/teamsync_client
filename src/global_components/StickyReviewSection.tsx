@@ -17,27 +17,27 @@ interface ReviewData {
 const reviews: ReviewData[] = [
   {
     quote:
-      "I used to spend my weekends doing invoices. Now Lumina does it while I sleep. Absolute game changer.",
+      "I used to spend my weekends tracking tasks across spreadsheet tabs. Now TeamSync organizes our multi-tenant workspace and generates AI summaries automatically. Absolute game changer!",
     author: "Jessica K.",
-    role: "Digital Artist",
+    role: "Product Manager",
     avatar:
       "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
     bgColor: "bg-white",
   },
   {
     quote:
-      "The interface is just so fun to use. It doesn't feel like 'work software'. It feels like a toy that makes money.",
+      "The real-time Kanban board and AI workspace summaries are super responsive. It doesn't feel like rigid enterprise software—it's actually fun to use with the team.",
     author: "Marcus R.",
-    role: "YouTuber",
+    role: "Engineering Lead",
     avatar:
       "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
     bgColor: "bg-[#FFFDF5]",
   },
   {
     quote:
-      "Migrated from 3 different tools into Lumina in under an hour. Support team is incredible.",
+      "Migrated our team from 3 different fragmented tools into TeamSync in under an hour. Managing multi-tenant client projects has never been this seamless.",
     author: "Sarah L.",
-    role: "Course Creator",
+    role: "Agile Coach",
     avatar:
       "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
     bgColor: "bg-white",
