@@ -9,8 +9,11 @@ import {
   Users,
 } from "lucide-react";
 import { KineticFabric } from "./KineticFabric";
+import { useAuthModal } from "@/context/auth.context";
 
 export default function HeroSection() {
+  const { openAuthModal } = useAuthModal();
+
   return (
     <section className="relative min-h-[90vh] w-full overflow-hidden border-b-4 border-black bg-[#FFFDF5] pt-12 pb-20">
       {/* Background Physics Fabric */}
@@ -45,13 +48,14 @@ export default function HeroSection() {
 
         {/* CTA Button Group */}
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 z-20">
-          <a
-            href="/auth/register"
+          <button
+            type="button"
+            onClick={() => openAuthModal("login")}
             className="w-full sm:w-auto neo-btn bg-[#FF6B6B] text-white px-8 py-4 text-lg sm:text-xl font-black uppercase flex items-center justify-center gap-3 tracking-wide"
           >
             <span>Start Free Trial</span>
             <ArrowRight className="size-6 stroke-3" />
-          </a>
+          </button>
 
           <a
             href="#features"
