@@ -3,20 +3,25 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import HypotrochoidLoader from "@/global_components/HypotrochoidLoader";
+import { useAuthModal } from "@/context/auth.context";
 
 export default function SSOCallbackPage() {
   const router = useRouter();
 
+  const { setIsAuthenticated } = useAuthModal();
+
   useEffect(() => {
     // Back-end httpOnly cookie সেট করে দেওয়ার পর ফ্রন্টএন্ড স্টেট রিফ্রেশ
     router.refresh();
+
+    setIsAuthenticated(true);
 
     const timer = setTimeout(() => {
       router.push("/");
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [router]);
+  }, [router, setIsAuthenticated]);
 
   return (
     <div className="flex h-screen w-full flex-col items-center justify-center bg-[#FFFDF5]">

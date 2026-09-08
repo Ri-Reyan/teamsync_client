@@ -13,7 +13,7 @@ interface OTPFormProps {
 
 const OTPForm = ({ email }: OTPFormProps) => {
   const router = useRouter();
-  const { closeAuthModal } = useAuthModal();
+  const { closeAuthModal, setIsAuthenticated, setUser } = useAuthModal();
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,6 +33,8 @@ const OTPForm = ({ email }: OTPFormProps) => {
       const response = await api.post("/auth/verify-email", { email, otp });
 
       if (response.data.success) {
+        setUser(response.data.data);
+        setIsAuthenticated(true);
         closeAuthModal();
         router.refresh();
       }

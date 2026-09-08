@@ -28,6 +28,7 @@ export default function ForgotPasswordPage() {
         );
         setEmail("");
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(
         err.response?.data?.message || "Failed to process request. Try again.",

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   Bot,
@@ -12,7 +13,20 @@ import { KineticFabric } from "./KineticFabric";
 import { useAuthModal } from "@/context/auth.context";
 
 export default function HeroSection() {
-  const { openAuthModal } = useAuthModal();
+  const router = useRouter();
+  const { openAuthModal, user, isAuthenticated } = useAuthModal();
+
+  // বাটনের ক্লিক হ্যান্ডলার
+  const handleAction = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (user) {
+      router.push("/dashboard");
+    } else if (isAuthenticated) {
+      router.push("/dashboard");
+    } else {
+      openAuthModal("login");
+    }
+  };
 
   return (
     <section className="relative min-h-[90vh] w-full overflow-hidden border-b-4 border-black bg-[#FFFDF5] pt-12 pb-20">
@@ -48,21 +62,24 @@ export default function HeroSection() {
 
         {/* CTA Button Group */}
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 z-20">
+          {/* Start Free Trial Button */}
           <button
             type="button"
-            onClick={() => openAuthModal("login")}
+            onClick={handleAction}
             className="w-full sm:w-auto neo-btn bg-[#FF6B6B] text-white px-8 py-4 text-lg sm:text-xl font-black uppercase flex items-center justify-center gap-3 tracking-wide"
           >
             <span>Start Free Trial</span>
             <ArrowRight className="size-6 stroke-3" />
           </button>
 
-          <a
-            href="#features"
+          {/* Explore Demo Button */}
+          <button
+            type="button"
+            onClick={handleAction}
             className="w-full sm:w-auto neo-btn bg-white text-black px-8 py-4 text-lg sm:text-xl font-black uppercase flex items-center justify-center gap-2 tracking-wide"
           >
             <span>Explore Demo</span>
-          </a>
+          </button>
         </div>
 
         {/* Floating Interactive Neo-Brutalism Cards (Product Teasers) */}

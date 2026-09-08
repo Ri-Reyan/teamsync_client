@@ -41,7 +41,7 @@ const pricingPlans: PricingTier[] = [
   {
     name: "PROFESSIONAL",
     tagline: "For growing teams that need more power",
-    price: "$79",
+    price: "$49",
     period: "/mo",
     popular: true,
     bgColor: "bg-black text-white",

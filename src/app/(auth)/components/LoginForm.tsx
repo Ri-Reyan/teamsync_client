@@ -12,7 +12,8 @@ import { loginSchema } from "@/schemas/auth.schemas";
 
 export default function LoginForm() {
   const router = useRouter();
-  const { setAuthMode, closeAuthModal } = useAuthModal();
+  const { setAuthMode, closeAuthModal, setUser, setIsAuthenticated } =
+    useAuthModal();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,6 +34,8 @@ export default function LoginForm() {
       const response = await api.post("/auth/login", formData);
 
       if (response.data.success) {
+        setUser(response.data.data);
+        setIsAuthenticated(true);
         closeAuthModal();
         router.refresh(); // Global auth state sync করার জন্য
         router.push("/");
@@ -48,8 +51,7 @@ export default function LoginForm() {
   };
 
   const handleGoogleLogin = () => {
-    const backendUrl =
-      process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL;
     // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.href = `${backendUrl}/auth/google`;
   };
