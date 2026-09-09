@@ -13,10 +13,11 @@ type AuthMode = "login" | "register";
 
 export interface User {
   id: string;
+  name?: string;
   email: string;
   role?: string;
   platformRole?: string;
-  name?: string;
+  package: "STARTER" | "PROFESSIONAL" | "ENTERPRISE";
 }
 
 interface AuthContextValue {

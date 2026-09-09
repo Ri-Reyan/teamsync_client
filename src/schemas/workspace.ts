@@ -8,3 +8,8 @@ export const createWorkspaceSchema = z.object({
 });
 
 export type CreateWorkspaceInput = z.infer<typeof createWorkspaceSchema>;
+
+export const inviteSchema = z.object({
+  member_email: z.string().email("Invalid email address"),
+  role: z.enum(["MEMBER", "ADMIN"]),
+});
