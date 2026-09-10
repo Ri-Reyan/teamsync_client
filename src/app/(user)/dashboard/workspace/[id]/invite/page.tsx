@@ -60,9 +60,11 @@ export default function InvitationsPage() {
   const handleCancelInvite = async (inviteId: string) => {
     setCancelingId(inviteId);
     try {
-      const res = await api.delete(
-        `/user/workspace/${workspaceId}/invitations/${inviteId}`,
-      );
+      const res = await api.delete(`/user/workspace/${workspaceId}/invite`, {
+        data: {
+          inviteId,
+        },
+      });
       if (res.data.success) {
         showToast.success("Invitation canceled successfully.");
         setInvitations((prev) => prev.filter((item) => item.id !== inviteId));
@@ -168,7 +170,7 @@ export default function InvitationsPage() {
                   </div>
 
                   <button
-                    onClick={() => handleCancelInvite(invite.id)}
+                    onClick={() => handleCancelInvite(invite.id as string)}
                     disabled={cancelingId === invite.id}
                     className="border-2 border-black bg-[#FF6B6B] p-2 text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none disabled:opacity-50"
                     title="Cancel Invitation"

@@ -1,18 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import {
-  Plus,
-  Folder,
-  Loader2,
-  Crown,
-  Sparkles,
-  ArrowRight,
-} from "lucide-react";
+import { Plus, Folder, Crown, Sparkles, ArrowRight } from "lucide-react";
+import { isAxiosError } from "axios";
 import { api } from "@/lib/axios";
 import CreateWorkspaceModal from "../_components/CreateWorkspaceModal";
 import { useAuthModal } from "@/context/auth.context";
+import HypotrochoidLoader from "@/global_components/HypotrochoidLoader";
+import { showToast } from "@/lib/toast";
 
 interface Workspace {
   id: string;
@@ -22,20 +18,25 @@ interface Workspace {
 export default function DashboardPage() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
 
   const { user } = useAuthModal();
 
-  const fetchWorkspaces = async () => {
+  const fetchWorkspaces = useCallback(async () => {
     try {
       const res = await api.get("/user/workspace");
       if (res.data.success) {
         setWorkspaces(res.data.data);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to fetch workspaces:", error);
+      if (isAxiosError(error)) {
+        showToast.error(
+          error.response?.data?.message || "Failed to load workspaces.",
+        );
+      }
     }
-  };
+  }, []);
 
   useEffect(() => {
     const initialFetch = async () => {
@@ -43,7 +44,7 @@ export default function DashboardPage() {
       setLoading(false);
     };
     initialFetch();
-  }, []);
+  }, [fetchWorkspaces]);
 
   const handleSuccess = () => {
     fetchWorkspaces();
@@ -52,7 +53,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#FFFDF5]">
-        <Loader2 className="h-10 w-10 animate-spin text-black" />
+        <HypotrochoidLoader />
       </div>
     );
   }
@@ -77,9 +78,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            {user?.package === "ENTERPRISE" ? (
-              <></>
-            ) : (
+            {user?.package !== "ENTERPRISE" && (
               <Link
                 href="/dashboard/pricing"
                 className="flex items-center gap-2 border-3 border-black bg-[#FFD93D] px-4 py-2.5 font-black uppercase text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-1 active:translate-y-1 active:shadow-none"
@@ -99,10 +98,8 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Subscription Upgrade Promo Banner (Optional Visual CTA) */}
-        {user?.package !== "STARTER" ? (
-          <></>
-        ) : (
+        {/* Subscription Upgrade Promo Banner */}
+        {user?.package === "STARTER" && (
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-3 border-black bg-[#6BCB77] p-4 sm:p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] gap-4">
             <div className="space-y-1">
               <div className="flex items-center gap-2 font-black uppercase text-black">
@@ -159,7 +156,7 @@ export default function DashboardPage() {
                     <div className="border-2 border-black bg-[#4D96FF] p-3 text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                       <Folder className="h-6 w-6 stroke-[2.5]" />
                     </div>
-                    <ArrowRight className="h-5 w-5 opacity-0 transition-opacity group-hover:opacity-100" />
+                    <ArrowRight className="h-5 w-5 opacity-0 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-1" />
                   </div>
 
                   <div className="mt-6">
