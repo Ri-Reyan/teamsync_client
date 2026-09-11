@@ -17,7 +17,7 @@ const WorkspaceProjectsPage = () => {
   const { id: workspaceId } = useParams<{ id: string }>();
 
   // Leave Workspace Modal State
-  const [workspaceDetail, setWorkspaceDetail] = useState<{
+  const [actionDetail, setActionDetail] = useState<{
     title: string;
     id: string;
     message: string;
@@ -30,6 +30,7 @@ const WorkspaceProjectsPage = () => {
   // Transfer Ownership Modal States
   const [isTransferOpen, setIsTransferOpen] = useState(false);
   const [members, setMembers] = useState<WorkspaceMember[]>([]);
+  const [isLoadingMembers, setIsLoadingMembers] = useState(false);
 
   // ১. Leave Workspace Handler
   const handleLeaveWorkspace = async (targetWorkspaceId: string) => {
@@ -53,6 +54,8 @@ const WorkspaceProjectsPage = () => {
   // ২. Fetch Members for Transfer Modal
   const fetchWorkspaceMembers = async () => {
     try {
+      setIsLoadingMembers(true);
+      // Correct Endpoint according to member.route.ts
       const res = await api.get(`/user/workspace/${workspaceId}/members`);
       if (res.data.success) {
         setMembers(res.data.data);
@@ -63,6 +66,8 @@ const WorkspaceProjectsPage = () => {
           error.response?.data?.message || "Failed to load workspace members",
         );
       }
+    } finally {
+      setIsLoadingMembers(false);
     }
   };
 
@@ -123,7 +128,7 @@ const WorkspaceProjectsPage = () => {
         <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={() =>
-              setWorkspaceDetail({
+              setActionDetail({
                 title: "Delete",
                 id: workspaceId,
                 message: "Are you sure you want to delete this workspace?",
@@ -137,7 +142,7 @@ const WorkspaceProjectsPage = () => {
 
           <button
             onClick={() =>
-              setWorkspaceDetail({
+              setActionDetail({
                 id: workspaceId,
                 title: "Leave",
                 message: "Are you sure you want to leave from this workspace?",
@@ -172,24 +177,21 @@ const WorkspaceProjectsPage = () => {
 
       {/* Leave Workspace Confirmation Modal */}
       <ConfirmModal
-        isOpen={Boolean(workspaceDetail.title)}
-        title={workspaceDetail.title}
-        message={workspaceDetail.message}
+        isOpen={Boolean(actionDetail.title)}
+        title={actionDetail.title}
+        message={actionDetail.message}
         onClose={() =>
-          setWorkspaceDetail({
+          setActionDetail({
             id: "",
             title: "",
             message: "",
           })
         }
         onConfirm={async () => {
-          if (
-            Boolean(workspaceDetail.title) &&
-            workspaceDetail.title === "Leave"
-          ) {
-            await handleLeaveWorkspace(workspaceDetail.id);
+          if (Boolean(actionDetail.title) && actionDetail.title === "Leave") {
+            await handleLeaveWorkspace(actionDetail.id);
           } else {
-            await handleDelete(workspaceDetail.id);
+            await handleDelete(actionDetail.id);
           }
         }}
       />
@@ -199,6 +201,7 @@ const WorkspaceProjectsPage = () => {
         isOpen={isTransferOpen}
         onClose={() => setIsTransferOpen(false)}
         members={members}
+        isLoadingMembers={isLoadingMembers}
         onTransferConfirm={handleTransferOwnershipSubmit}
       />
     </div>

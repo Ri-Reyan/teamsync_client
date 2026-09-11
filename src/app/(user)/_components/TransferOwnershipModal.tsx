@@ -5,11 +5,15 @@ import { ArrowLeftRight, X, AlertTriangle, Check, Loader2 } from "lucide-react";
 
 // Workspace Member Types
 export interface WorkspaceMember {
-  id: string;
-  name: string;
-  email: string;
-  avatar?: string;
-  role: "ADMIN" | "MEMBER";
+  id: string; // Member Table ID
+  role: "ADMIN" | "MEMBER" | "OWNER";
+  createdAt?: string;
+  user: {
+    id: string;
+    name?: string;
+    email: string;
+    role?: string;
+  };
 }
 
 interface TransferOwnershipModalProps {
@@ -35,11 +39,19 @@ export const TransferOwnershipModal = ({
 
   if (!isOpen) return null;
 
-  // Case-insensitive & trimmed name verification for better UX
+  // Helper to safely resolve a member's display name
+  const getDisplayName = (member: WorkspaceMember | null) => {
+    if (!member) return "";
+    return (
+      member.user.name?.trim() || member.user.email?.split("@")[0] || "User"
+    );
+  };
+
+  const selectedTargetName = getDisplayName(selectedMember);
+
   const isNameMatched =
-    selectedMember &&
-    confirmName.trim().toLowerCase() ===
-      selectedMember.name.trim().toLowerCase();
+    Boolean(selectedTargetName) &&
+    confirmName.trim().toLowerCase() === selectedTargetName.toLowerCase();
 
   const handleTransfer = async () => {
     if (!selectedMember || !isNameMatched) return;
@@ -59,20 +71,6 @@ export const TransferOwnershipModal = ({
     setSelectedMember(null);
     setConfirmName("");
     onClose();
-  };
-
-  // Helper to extract first and last initials safely
-  const getInitials = (name?: string): string => {
-    if (!name) return "U";
-
-    const words = name.trim().split(" ");
-    if (words.length === 1) {
-      return words[0].charAt(0).toUpperCase();
-    }
-
-    return (
-      words[0].charAt(0) + words[words.length - 1].charAt(0)
-    ).toUpperCase();
   };
 
   return (
@@ -108,7 +106,7 @@ export const TransferOwnershipModal = ({
           <AlertTriangle className="h-5 w-5 shrink-0 stroke-[2.5] text-[#FF6B6B]" />
           <p className="text-xs font-bold leading-tight text-black">
             Warning: Once transferred, you will lose owner privileges and become
-            a admin.
+            an admin.
           </p>
         </div>
 
@@ -131,6 +129,9 @@ export const TransferOwnershipModal = ({
             ) : (
               members.map((member) => {
                 const isSelected = selectedMember?.id === member.id;
+                const displayName = getDisplayName(member);
+                const initial = displayName.charAt(0).toUpperCase() || "U";
+
                 return (
                   <div
                     key={member.id}
@@ -146,9 +147,8 @@ export const TransferOwnershipModal = ({
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      {/* Using the getInitials function here */}
                       <div className="flex h-8 w-8 items-center justify-center border-2 border-black bg-[#FFD93D] text-xs font-black uppercase text-black">
-                        {getInitials(member.name)}
+                        {initial}
                       </div>
                       <div>
                         <p
@@ -156,14 +156,14 @@ export const TransferOwnershipModal = ({
                             isSelected ? "text-white" : "text-black"
                           }`}
                         >
-                          {member.name}
+                          {displayName}
                         </p>
                         <p
                           className={`text-[10px] font-semibold ${
                             isSelected ? "text-blue-100" : "text-gray-600"
                           }`}
                         >
-                          {member.email} • {member.role}
+                          {member.user.name} • {member.user.role}
                         </p>
                       </div>
                     </div>
@@ -188,17 +188,16 @@ export const TransferOwnershipModal = ({
             <p className="text-[11px] font-bold text-gray-700">
               Type{" "}
               <span className="underline decoration-2">
-                {selectedMember.name}
+                {selectedTargetName}
               </span>{" "}
               to confirm ownership transfer:
             </p>
             <input
               type="text"
-              disabled={isLoading}
               value={confirmName}
               onChange={(e) => setConfirmName(e.target.value)}
-              placeholder={selectedMember.name}
-              className="w-full border-2 border-black bg-white p-2 text-xs font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] outline-none focus:bg-yellow-50 disabled:opacity-50"
+              placeholder={`Type "${selectedTargetName}"`}
+              className="w-full border-2 border-black bg-white p-2 text-xs font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] outline-none focus:bg-yellow-50 disabled:opacity-50 text-black"
             />
           </div>
         )}

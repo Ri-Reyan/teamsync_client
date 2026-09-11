@@ -65,9 +65,12 @@ export default function DashboardPage() {
         <div className="flex flex-col gap-4 border-b-4 border-black pb-6 md:flex-row md:items-center md:justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-tight">
+              <Link
+                href={"/"}
+                className="text-3xl sm:text-4xl font-black uppercase tracking-tight"
+              >
                 Dashboard
-              </h1>
+              </Link>
               <span className="border-2 border-black bg-[#4D96FF] px-2 py-0.5 text-xs font-black uppercase text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                 {workspaces.length} Workspaces
               </span>
