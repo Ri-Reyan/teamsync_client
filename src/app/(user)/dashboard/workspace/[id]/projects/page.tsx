@@ -16,7 +16,6 @@ import {
   Plus,
   Trash2,
   Folder,
-  Loader2,
   Calendar,
   ArrowRight,
   MoreVertical,
@@ -24,6 +23,7 @@ import {
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import HypotrochoidLoader from "@/global_components/HypotrochoidLoader";
 
 export interface Project {
   id: string;
@@ -341,7 +341,7 @@ const WorkspaceProjectsPage = () => {
       {isLoadingProjects ? (
         <div className="flex h-64 items-center justify-center border-4 border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
           <div className="flex items-center gap-3 text-sm font-black uppercase text-black">
-            <Loader2 className="h-6 w-6 animate-spin stroke-3 text-black" />
+            <HypotrochoidLoader />
             Loading projects...
           </div>
         </div>
@@ -371,7 +371,9 @@ const WorkspaceProjectsPage = () => {
             <div
               key={project.id}
               onClick={() =>
-                router.push(`/workspace/${workspaceId}/project/${project.id}`)
+                router.push(
+                  `/dashboard/workspace/${workspaceId}/projects/${project.id}/sprint`,
+                )
               }
               className="group relative border-4 border-black bg-white p-5 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] cursor-pointer"
             >

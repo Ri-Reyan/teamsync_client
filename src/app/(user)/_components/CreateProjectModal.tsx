@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { FolderPlus, X, Loader2 } from "lucide-react";
+import { FolderPlus, X } from "lucide-react";
+import HypotrochoidLoader from "@/global_components/HypotrochoidLoader";
 
 interface CreateProjectModalProps {
   isOpen: boolean;
@@ -133,9 +134,7 @@ export const CreateProjectModal = ({
                   : "cursor-not-allowed bg-gray-300 text-gray-500 opacity-70"
               }`}
             >
-              {isLoading && (
-                <Loader2 className="h-4 w-4 animate-spin stroke-3" />
-              )}
+              {isLoading && <HypotrochoidLoader size={16} />}
               {isLoading ? "Creating..." : "Create Project"}
             </button>
           </div>

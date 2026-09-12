@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeftRight, X, AlertTriangle, Check, Loader2 } from "lucide-react";
+import { ArrowLeftRight, X, AlertTriangle, Check } from "lucide-react";
+import HypotrochoidLoader from "@/global_components/HypotrochoidLoader";
 
 // Workspace Member Types
 export interface WorkspaceMember {
@@ -119,7 +120,7 @@ export const TransferOwnershipModal = ({
           <div className="max-h-48 divide-y-2 divide-black overflow-y-auto border-2 border-black bg-gray-50">
             {isLoadingMembers ? (
               <div className="flex items-center justify-center p-6 text-xs font-bold text-black">
-                <Loader2 className="mr-2 h-4 w-4 animate-spin stroke-3" />
+                <HypotrochoidLoader size={16} className="mr-2" />
                 Loading workspace members...
               </div>
             ) : members.length === 0 ? (
@@ -223,9 +224,7 @@ export const TransferOwnershipModal = ({
                 : "cursor-not-allowed bg-gray-300 text-gray-500 opacity-70"
             }`}
           >
-            {isLoading && (
-              <Loader2 className="h-3.5 w-3.5 animate-spin stroke-3" />
-            )}
+            {isLoading && <HypotrochoidLoader size={14} />}
             {isLoading ? "Transferring..." : "Confirm Transfer"}
           </button>
         </div>

@@ -2,18 +2,12 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
-import {
-  UserPlus,
-  Mail,
-  Clock,
-  Trash2,
-  Loader2,
-  RefreshCw,
-} from "lucide-react";
+import { UserPlus, Mail, Clock, Trash2, RefreshCw } from "lucide-react";
 import { isAxiosError } from "axios";
 import { api } from "@/lib/axios";
 import { showToast } from "@/lib/toast";
 import SendInvitationModal from "@/app/(user)/_components/SendInvitationModal";
+import HypotrochoidLoader from "@/global_components/HypotrochoidLoader";
 
 interface PendingInvitation {
   id: string;
@@ -83,7 +77,7 @@ export default function InvitationsPage() {
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#FFFDF5]">
-        <Loader2 className="h-10 w-10 animate-spin text-black" />
+        <HypotrochoidLoader size={40} color="#000000" />
       </div>
     );
   }
@@ -176,7 +170,7 @@ export default function InvitationsPage() {
                     title="Cancel Invitation"
                   >
                     {cancelingId === invite.id ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <HypotrochoidLoader size={16} />
                     ) : (
                       <Trash2 className="h-4 w-4" />
                     )}

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Edit3, X, Loader2 } from "lucide-react";
+import { Edit3, X } from "lucide-react";
+import HypotrochoidLoader from "@/global_components/HypotrochoidLoader";
 
 interface UpdateProjectModalProps {
   isOpen: boolean;
@@ -112,9 +113,7 @@ const ProjectForm = ({
               disabled={isLoading || !name.trim()}
               className="flex items-center gap-2 border-2 border-black bg-[#FFD93D] px-4 py-2 text-xs font-black uppercase text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
             >
-              {isLoading && (
-                <Loader2 className="h-4 w-4 animate-spin stroke-3" />
-              )}
+              {isLoading && <HypotrochoidLoader size={16} />}
               {isLoading ? "Saving..." : "Update"}
             </button>
           </div>

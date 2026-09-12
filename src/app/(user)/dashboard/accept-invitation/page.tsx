@@ -2,13 +2,7 @@
 
 import { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import {
-  CheckCircle2,
-  XCircle,
-  Loader2,
-  ArrowRight,
-  ShieldCheck,
-} from "lucide-react";
+import { CheckCircle2, XCircle, ArrowRight, ShieldCheck } from "lucide-react";
 import { isAxiosError } from "axios";
 import { api } from "@/lib/axios";
 import { showToast } from "@/lib/toast";
@@ -151,7 +145,7 @@ export default function AcceptInvitationPage() {
       <Suspense
         fallback={
           <div className="flex items-center gap-2 border-4 border-black bg-white p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
-            <Loader2 className="h-6 w-6 animate-spin" />
+            <HypotrochoidLoader size={24} color="#000000" />
             <span className="font-black uppercase">Loading link...</span>
           </div>
         }

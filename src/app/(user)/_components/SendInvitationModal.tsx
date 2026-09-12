@@ -4,11 +4,12 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { X, Mail, Shield, Loader2 } from "lucide-react";
+import { X, Mail, Shield } from "lucide-react";
 import { isAxiosError } from "axios";
 import { api } from "@/lib/axios";
 import { showToast } from "@/lib/toast";
 import { inviteSchema } from "@/schemas/workspace";
+import HypotrochoidLoader from "@/global_components/HypotrochoidLoader";
 
 type InviteFormData = z.infer<typeof inviteSchema>;
 
@@ -143,11 +144,7 @@ export default function SendInvitationModal({
               disabled={loading}
               className="flex w-1/2 items-center justify-center gap-2 border-3 border-black bg-[#4D96FF] py-2.5 font-black uppercase text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none disabled:opacity-70"
             >
-              {loading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                "Send Invite"
-              )}
+              {loading ? <HypotrochoidLoader size={20} /> : "Send Invite"}
             </button>
           </div>
         </form>
