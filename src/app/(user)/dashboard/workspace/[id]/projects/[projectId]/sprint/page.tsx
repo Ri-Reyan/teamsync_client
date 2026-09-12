@@ -4,6 +4,12 @@ import { useState, useEffect, useCallback } from "react";
 import { isAxiosError } from "axios";
 import { useParams } from "next/navigation";
 import {
+  DragDropContext,
+  Droppable,
+  Draggable,
+  DropResult,
+} from "@hello-pangea/dnd";
+import {
   ChevronDown,
   Calendar,
   CheckCircle2,
@@ -16,10 +22,12 @@ import {
   Pencil,
   Trash2,
   X,
+  GripVertical,
 } from "lucide-react";
 import { showToast } from "@/lib/toast";
 import { api } from "@/lib/axios";
 import HypotrochoidLoader from "@/global_components/HypotrochoidLoader";
+import ConfirmModal from "@/global_components/confirmModal";
 
 export interface Task {
   id: string | number;
@@ -30,6 +38,11 @@ export interface Task {
   assignee?: {
     name: string;
   };
+}
+
+interface TaskApiResponse extends Omit<Task, "status" | "priority"> {
+  task_status: Task["status"];
+  priority?: Task["priority"];
 }
 
 export interface Sprint {
@@ -79,6 +92,10 @@ export default function SprintBoardPage() {
   const [selectedTaskToEdit, setSelectedTaskToEdit] = useState<Task | null>(
     null,
   );
+  const [deleteTarget, setDeleteTarget] = useState<
+    { type: "sprint" } | { type: "task"; taskId: string | number } | null
+  >(null);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
@@ -93,7 +110,7 @@ export default function SprintBoardPage() {
   const [taskStatus, setTaskStatus] = useState<Task["status"]>("TODO");
   const [taskPriority, setTaskPriority] = useState<Task["priority"]>("MEDIUM");
 
-  // 1. Unified Sprints Fetching Logic
+  // Fetch Sprints
   const fetchSprints = useCallback(async () => {
     if (!workspaceId || !projectId) {
       setIsLoadingSprints(false);
@@ -134,13 +151,12 @@ export default function SprintBoardPage() {
     }
   }, [workspaceId, projectId]);
 
-  // Handle Initial Sprint Load
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchSprints();
   }, [fetchSprints]);
 
-  // 2. Fetch Tasks Logic
+  // Fetch Tasks
   // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const fetchTasks = useCallback(async () => {
     if (!selectedSprint?.id || !workspaceId || !projectId) {
@@ -150,10 +166,20 @@ export default function SprintBoardPage() {
 
     try {
       setIsLoadingTasks(true);
-      const response = await api.get<{ success: boolean; data: Task[] }>(
+      const response = await api.get<{
+        success: boolean;
+        data: TaskApiResponse[];
+      }>(
         `/user/workspace/${workspaceId}/project/${projectId}/sprint/${selectedSprint.id}/tasks`,
       );
-      setTasks(response.data?.data || []);
+      const fetchedTasks = response.data?.data || [];
+      setTasks(
+        fetchedTasks.map(({ task_status, priority, ...task }) => ({
+          ...task,
+          status: task_status,
+          priority: priority || "MEDIUM",
+        })),
+      );
     } catch (err: unknown) {
       console.error("Failed to fetch tasks:", err);
       showToast.error("Failed to fetch tasks for this sprint");
@@ -168,34 +194,64 @@ export default function SprintBoardPage() {
     fetchTasks();
   }, [fetchTasks]);
 
-  // --- CRUD Handlers for Sprint ---
+  // --- DRAG AND DROP HANDLER ---
+  const handleOnDragEnd = async (result: DropResult) => {
+    const { destination, source, draggableId } = result;
 
+    // ১. ড্রপ যদি কোনো ড্রপজোনের বাইরে হয়, কিছুই করব না
+    if (!destination) return;
+
+    // ২. যদি একই কলামের একই পজিশনে ছেড়ে দেয়
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    ) {
+      return;
+    }
+
+    const newStatus = destination.droppableId as Task["status"];
+    const previousTasks = [...tasks];
+
+    // ৩. Optimistic UI Update (ইউজার অভিজ্ঞতা দ্রুত রাখার জন্য)
+    setTasks((prevTasks) =>
+      prevTasks.map((t) =>
+        String(t.id) === String(draggableId) ? { ...t, status: newStatus } : t,
+      ),
+    );
+
+    // ৪. Backend API Call to Update Task Status
+    try {
+      await api.patch(
+        `/user/workspace/${workspaceId}/project/${projectId}/sprint/${selectedSprint?.id}/tasks/${draggableId}`,
+        { status: newStatus },
+      );
+      showToast.success(`Moved to ${newStatus.replace("_", " ")}`);
+      fetchSprints(); // Progress bar আপডেট করার জন্য
+    } catch (err: unknown) {
+      // API ব্যর্থ হলে আগের অবস্থায় ফিরিয়ে নেওয়া
+      setTasks(previousTasks);
+      if (isAxiosError(err)) {
+        showToast.error(
+          err.response?.data?.message || "Failed to update task status",
+        );
+      } else {
+        showToast.error("Failed to update task status");
+      }
+    }
+  };
+
+  // --- CRUD Handlers for Sprint ---
   const handleCreateSprint = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (
-      !workspaceId ||
-      workspaceId === "undefined" ||
-      !projectId ||
-      projectId === "undefined"
-    ) {
-      showToast.error("Workspace or Project ID missing!");
+    if (!workspaceId || !projectId || !sprintName || !startDate || !endDate)
       return;
-    }
-
-    if (!sprintName || !startDate || !endDate) {
-      showToast.error("Please fill all sprint fields");
-      return;
-    }
 
     try {
       setIsSubmitting(true);
-
       await api.post(
         `/user/workspace/${workspaceId}/project/${projectId}/sprint`,
         { name: sprintName, startDate, endDate },
       );
-
       showToast.success("Sprint created successfully");
       setIsCreateModalOpen(false);
       setSprintName("");
@@ -231,12 +287,10 @@ export default function SprintBoardPage() {
 
     try {
       setIsSubmitting(true);
-
-      await api.patch(
+      await api.put(
         `/user/workspace/${workspaceId}/project/${projectId}/sprint/${selectedSprint.id}`,
         { name: sprintName, startDate, endDate },
       );
-
       showToast.success("Sprint updated successfully");
       setIsUpdateModalOpen(false);
       fetchSprints();
@@ -253,17 +307,17 @@ export default function SprintBoardPage() {
 
   const handleDeleteSprint = async () => {
     if (!selectedSprint) return;
+    setDeleteTarget({ type: "sprint" });
+  };
 
-    if (!confirm(`Are you sure you want to delete "${selectedSprint.name}"?`))
-      return;
+  const deleteSprint = async () => {
+    if (!selectedSprint) return;
 
     try {
-      setIsSubmitting(true);
-
+      setIsDeleting(true);
       await api.delete(
         `/user/workspace/${workspaceId}/project/${projectId}/sprint/${selectedSprint.id}`,
       );
-
       showToast.success("Sprint deleted successfully");
       setSelectedSprint(null);
       fetchSprints();
@@ -274,12 +328,11 @@ export default function SprintBoardPage() {
         );
       }
     } finally {
-      setIsSubmitting(false);
+      setIsDeleting(false);
     }
   };
 
   // --- CRUD Handlers for Task ---
-
   const openCreateTaskModal = () => {
     setTaskTitle("");
     setTaskDescription("");
@@ -290,14 +343,10 @@ export default function SprintBoardPage() {
 
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedSprint || !taskTitle.trim()) {
-      showToast.error("Task title is required");
-      return;
-    }
+    if (!selectedSprint || !taskTitle.trim()) return;
 
     try {
       setIsSubmitting(true);
-
       await api.post(
         `/user/workspace/${workspaceId}/project/${projectId}/sprint/${selectedSprint.id}/tasks`,
         {
@@ -307,7 +356,6 @@ export default function SprintBoardPage() {
           priority: taskPriority,
         },
       );
-
       showToast.success("Task created successfully");
       setIsCreateTaskModalOpen(false);
       fetchTasks();
@@ -336,7 +384,6 @@ export default function SprintBoardPage() {
 
     try {
       setIsSubmitting(true);
-
       await api.patch(
         `/user/workspace/${workspaceId}/project/${projectId}/sprint/${selectedSprint.id}/tasks/${selectedTaskToEdit.id}`,
         {
@@ -346,7 +393,6 @@ export default function SprintBoardPage() {
           priority: taskPriority,
         },
       );
-
       showToast.success("Task updated successfully");
       setIsUpdateTaskModalOpen(false);
       setSelectedTaskToEdit(null);
@@ -363,15 +409,17 @@ export default function SprintBoardPage() {
 
   const handleDeleteTask = async (taskId: string | number) => {
     if (!selectedSprint) return;
-    if (!confirm("Are you sure you want to delete this task?")) return;
+    setDeleteTarget({ type: "task", taskId });
+  };
+
+  const deleteTask = async (taskId: string | number) => {
+    if (!selectedSprint) return;
 
     try {
-      setIsSubmitting(true);
-
+      setIsDeleting(true);
       await api.delete(
         `/user/workspace/${workspaceId}/project/${projectId}/sprint/${selectedSprint.id}/tasks/${taskId}`,
       );
-
       showToast.success("Task deleted successfully");
       fetchTasks();
       fetchSprints();
@@ -380,11 +428,22 @@ export default function SprintBoardPage() {
         showToast.error(err.response?.data?.message || "Failed to delete task");
       }
     } finally {
-      setIsSubmitting(false);
+      setIsDeleting(false);
     }
   };
 
-  // Helpers
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+
+    if (deleteTarget.type === "sprint") {
+      await deleteSprint();
+    } else {
+      await deleteTask(deleteTarget.taskId);
+    }
+
+    setDeleteTarget(null);
+  };
+
   const getPriorityStyle = (priority: Task["priority"]) => {
     switch (priority) {
       case "URGENT":
@@ -409,7 +468,6 @@ export default function SprintBoardPage() {
     });
   };
 
-  // Progress Calculations (Falls back to client side calculation if backend count isn't updated)
   const totalTasks = tasks.length;
   const completedTasks = tasks.filter((t) => t.status === "DONE").length;
   const completionPercentage =
@@ -448,7 +506,7 @@ export default function SprintBoardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Top Controls & Dropdown */}
+      {/* Top Controls */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative w-full sm:w-80">
           <label className="mb-1 block text-xs font-black uppercase tracking-wider text-black">
@@ -457,7 +515,7 @@ export default function SprintBoardPage() {
           <button
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             disabled={sprints.length === 0}
-            className="flex w-full items-center justify-between border-4 border-black bg-white p-3 text-xs font-black text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-transform active:translate-x-0.5 active:translate-y-0.5 active:shadow-none disabled:opacity-50"
+            className="flex w-full items-center justify-between border-4 border-black bg-white p-3 text-xs font-black text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none disabled:opacity-50"
           >
             <span className="flex items-center gap-2 truncate">
               <Layers className="h-4 w-4 stroke-[2.5]" />
@@ -479,7 +537,7 @@ export default function SprintBoardPage() {
                     setSelectedSprint(sprint);
                     setIsDropdownOpen(false);
                   }}
-                  className={`flex w-full items-center justify-between p-3 text-left text-xs font-bold transition-colors ${
+                  className={`flex w-full items-center justify-between p-3 text-left text-xs font-bold ${
                     sprint.id === selectedSprint?.id
                       ? "bg-[#FFD93D] font-black text-black"
                       : "bg-white text-black hover:bg-gray-100"
@@ -504,7 +562,7 @@ export default function SprintBoardPage() {
               setEndDate("");
               setIsCreateModalOpen(true);
             }}
-            className="flex items-center gap-2 border-4 border-black bg-[#4D96FF] px-4 py-3 text-xs font-black uppercase text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-x-1 active:translate-y-1 active:shadow-none"
+            className="flex items-center gap-2 border-4 border-black bg-[#4D96FF] px-4 py-3 text-xs font-black uppercase text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-1 active:translate-y-1 active:shadow-none"
           >
             <Plus className="h-4 w-4 stroke-3" />
             <span>Create Sprint</span>
@@ -513,7 +571,7 @@ export default function SprintBoardPage() {
           <button
             disabled={!selectedSprint}
             onClick={openCreateTaskModal}
-            className="flex items-center gap-2 border-4 border-black bg-[#6BCB77] px-4 py-3 text-xs font-black uppercase text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-x-1 active:translate-y-1 active:shadow-none disabled:opacity-50"
+            className="flex items-center gap-2 border-4 border-black bg-[#6BCB77] px-4 py-3 text-xs font-black uppercase text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-1 active:translate-y-1 active:shadow-none disabled:opacity-50"
           >
             <Plus className="h-4 w-4 stroke-3" />
             <span>Create Task</span>
@@ -521,7 +579,7 @@ export default function SprintBoardPage() {
         </div>
       </div>
 
-      {/* Selected Sprint Details Header Banner */}
+      {/* Selected Sprint Details Header */}
       {selectedSprint ? (
         <div className="relative border-4 border-black bg-[#D48800] p-5 text-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -548,7 +606,6 @@ export default function SprintBoardPage() {
                 </div>
               </div>
 
-              {/* Realtime Updated Progress */}
               <div className="flex items-center gap-3">
                 <span className="text-sm font-black uppercase">
                   Complete: {completionPercentage}% ({completedTasks}/
@@ -582,118 +639,149 @@ export default function SprintBoardPage() {
         </div>
       )}
 
-      {/* Kanban Board Columns */}
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
-        {STATUS_COLUMNS.map((column) => {
-          const columnTasks = tasks.filter((t) => t.status === column.key);
+      {/* --- KANBAN BOARD DRAG AND DROP CONTAINER --- */}
+      <DragDropContext onDragEnd={handleOnDragEnd}>
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
+          {STATUS_COLUMNS.map((column) => {
+            const columnTasks = tasks.filter((t) => t.status === column.key);
 
-          return (
-            <div
-              key={column.key}
-              className="flex min-h-112.5 flex-col border-4 border-black bg-[#333333] shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]"
-            >
-              <div className="flex items-center justify-between border-b-4 border-black bg-white p-3">
-                <div className="flex items-center gap-2">
-                  <div
-                    className={`h-3 w-3 border-2 border-black ${column.color}`}
-                  />
-                  <h3 className="text-xs font-black uppercase text-black">
-                    {column.label}
-                  </h3>
-                </div>
-                <span className="border-2 border-black bg-gray-200 px-2 py-0.5 text-[10px] font-black text-black">
-                  {columnTasks.length}
-                </span>
-              </div>
-
-              <div className="max-h-150 flex-1 space-y-3 overflow-y-auto p-3">
-                {isLoadingTasks ? (
-                  <div className="flex h-32 items-center justify-center">
-                    <RefreshCw className="h-6 w-6 animate-spin text-white" />
-                  </div>
-                ) : columnTasks.length === 0 ? (
-                  <div className="flex h-32 flex-col items-center justify-center border-2 border-dashed border-gray-600 p-4 text-center">
-                    <AlertCircle className="mb-1 h-5 w-5 text-gray-400" />
-                    <p className="text-[11px] font-bold uppercase text-gray-400">
-                      No Tasks
-                    </p>
-                  </div>
-                ) : (
-                  columnTasks.map((task) => (
+            return (
+              <div
+                key={column.key}
+                className="flex min-h-112.5 flex-col border-4 border-black bg-[#333333] shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]"
+              >
+                {/* Column Header */}
+                <div className="flex items-center justify-between border-b-4 border-black bg-white p-3">
+                  <div className="flex items-center gap-2">
                     <div
-                      key={task.id}
-                      className="group relative cursor-pointer border-3 border-black bg-white p-3.5 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]"
+                      className={`h-3 w-3 border-2 border-black ${column.color}`}
+                    />
+                    <h3 className="text-xs font-black uppercase text-black">
+                      {column.label}
+                    </h3>
+                  </div>
+                  <span className="border-2 border-black bg-gray-200 px-2 py-0.5 text-[10px] font-black text-black">
+                    {columnTasks.length}
+                  </span>
+                </div>
+
+                {/* Droppable Column Area */}
+                <Droppable droppableId={column.key}>
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      className={`max-h-150 flex-1 space-y-3 overflow-y-auto p-3 transition-colors ${
+                        snapshot.isDraggingOver ? "bg-[#444444]" : ""
+                      }`}
                     >
-                      <div className="mb-2 flex items-center justify-between">
-                        <span
-                          className={`border border-black px-1.5 py-0.5 text-[9px] font-black uppercase ${getPriorityStyle(
-                            task.priority,
-                          )}`}
-                        >
-                          {task.priority}
-                        </span>
-
-                        {/* Task Edit & Delete Actions */}
-                        <div className="flex items-center gap-1 opacity-90 transition-opacity group-hover:opacity-100">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openUpdateTaskModal(task);
-                            }}
-                            className="border border-black bg-gray-100 p-1 hover:bg-yellow-300"
-                            title="Edit Task"
-                          >
-                            <Pencil className="h-3 w-3 text-black" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteTask(task.id);
-                            }}
-                            className="border border-black bg-red-100 p-1 hover:bg-red-400 hover:text-white"
-                            title="Delete Task"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </button>
+                      {isLoadingTasks ? (
+                        <div className="flex h-32 items-center justify-center">
+                          <RefreshCw className="h-6 w-6 animate-spin text-white" />
                         </div>
-                      </div>
+                      ) : columnTasks.length === 0 ? (
+                        <div className="flex h-32 flex-col items-center justify-center border-2 border-dashed border-gray-600 p-4 text-center">
+                          <AlertCircle className="mb-1 h-5 w-5 text-gray-400" />
+                          <p className="text-[11px] font-bold uppercase text-gray-400">
+                            No Tasks
+                          </p>
+                        </div>
+                      ) : (
+                        columnTasks.map((task, index) => (
+                          <Draggable
+                            key={String(task.id)}
+                            draggableId={String(task.id)}
+                            index={index}
+                          >
+                            {(dragProvided, dragSnapshot) => (
+                              <div
+                                ref={dragProvided.innerRef}
+                                {...dragProvided.draggableProps}
+                                {...dragProvided.dragHandleProps}
+                                className={`group relative cursor-grab select-none border-3 border-black bg-white p-3.5 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-transform active:cursor-grabbing ${
+                                  dragSnapshot.isDragging
+                                    ? "scale-105 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] z-50"
+                                    : ""
+                                }`}
+                              >
+                                <div className="mb-2 flex items-center justify-between">
+                                  <div className="flex items-center gap-1.5">
+                                    {/* Drag Handle */}
+                                    <span className="text-gray-400 group-hover:text-black">
+                                      <GripVertical className="h-4 w-4" />
+                                    </span>
+                                    <span
+                                      className={`border border-black px-1.5 py-0.5 text-[9px] font-black uppercase ${getPriorityStyle(
+                                        task.priority,
+                                      )}`}
+                                    >
+                                      {task.priority}
+                                    </span>
+                                  </div>
 
-                      <h4 className="text-xs font-black uppercase tracking-wide text-black group-hover:underline">
-                        {task.title}
-                      </h4>
+                                  {/* Task Actions */}
+                                  <div className="flex items-center gap-1 opacity-90 transition-opacity group-hover:opacity-100">
+                                    <button
+                                      onClick={() => openUpdateTaskModal(task)}
+                                      className="border border-black bg-gray-100 p-1 hover:bg-yellow-300"
+                                      title="Edit Task"
+                                    >
+                                      <Pencil className="h-3 w-3 text-black" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteTask(task.id)}
+                                      className="border border-black bg-red-100 p-1 hover:bg-red-400 hover:text-white"
+                                      title="Delete Task"
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                </div>
 
-                      {task.description && (
-                        <p className="mt-1 line-clamp-2 text-[11px] font-bold text-gray-600">
-                          {task.description}
-                        </p>
+                                <h4 className="text-xs font-black uppercase tracking-wide text-black">
+                                  {task.title}
+                                </h4>
+
+                                {task.description && (
+                                  <p className="mt-1 line-clamp-2 text-[11px] font-bold text-gray-600">
+                                    {task.description}
+                                  </p>
+                                )}
+
+                                <div className="mt-3 flex items-center justify-between border-t-2 border-gray-200 pt-2 text-[10px] font-bold text-gray-600">
+                                  {task.assignee ? (
+                                    <div className="flex items-center gap-1.5">
+                                      <div className="flex h-5 w-5 items-center justify-center border border-black bg-[#FFD93D] font-black text-black">
+                                        {task.assignee.name.charAt(0)}
+                                      </div>
+                                      <span className="max-w-25 truncate">
+                                        {task.assignee.name}
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <span className="flex items-center gap-1 italic text-gray-400">
+                                      <UserIcon className="h-3 w-3" />{" "}
+                                      Unassigned
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </Draggable>
+                        ))
                       )}
-
-                      <div className="mt-3 flex items-center justify-between border-t-2 border-gray-200 pt-2 text-[10px] font-bold text-gray-600">
-                        {task.assignee ? (
-                          <div className="flex items-center gap-1.5">
-                            <div className="flex h-5 w-5 items-center justify-center border border-black bg-[#FFD93D] font-black text-black">
-                              {task.assignee.name.charAt(0)}
-                            </div>
-                            <span className="max-w-25 truncate">
-                              {task.assignee.name}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="flex items-center gap-1 italic text-gray-400">
-                            <UserIcon className="h-3 w-3" /> Unassigned
-                          </span>
-                        )}
-                      </div>
+                      {provided.placeholder}
                     </div>
-                  ))
-                )}
+                  )}
+                </Droppable>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      </DragDropContext>
 
-      {/* --- CREATE SPRINT MODAL --- */}
+      {/* --- MODALS (Create/Update Sprint & Task) --- */}
+      {/* (আগের সম্পূর্ণ Modal JSX কোড অপরিবর্তিত আছে) */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="w-full max-w-md border-4 border-black bg-white p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
@@ -769,7 +857,6 @@ export default function SprintBoardPage() {
         </div>
       )}
 
-      {/* --- UPDATE SPRINT MODAL --- */}
       {isUpdateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="w-full max-w-md border-4 border-black bg-white p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
@@ -844,7 +931,6 @@ export default function SprintBoardPage() {
         </div>
       )}
 
-      {/* --- CREATE TASK MODAL --- */}
       {isCreateTaskModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="w-full max-w-md border-4 border-black bg-white p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
@@ -873,7 +959,6 @@ export default function SprintBoardPage() {
                   className="w-full border-3 border-black p-2 text-xs font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] outline-none focus:bg-yellow-50"
                 />
               </div>
-
               <div>
                 <label className="mb-1 block text-xs font-black uppercase text-black">
                   Description
@@ -886,7 +971,6 @@ export default function SprintBoardPage() {
                   className="w-full border-3 border-black p-2 text-xs font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] outline-none focus:bg-yellow-50"
                 />
               </div>
-
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="mb-1 block text-xs font-black uppercase text-black">
@@ -905,7 +989,6 @@ export default function SprintBoardPage() {
                     <option value="DONE">DONE</option>
                   </select>
                 </div>
-
                 <div>
                   <label className="mb-1 block text-xs font-black uppercase text-black">
                     Priority
@@ -924,7 +1007,6 @@ export default function SprintBoardPage() {
                   </select>
                 </div>
               </div>
-
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
@@ -946,7 +1028,6 @@ export default function SprintBoardPage() {
         </div>
       )}
 
-      {/* --- UPDATE TASK MODAL --- */}
       {isUpdateTaskModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="w-full max-w-md border-4 border-black bg-white p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
@@ -974,7 +1055,6 @@ export default function SprintBoardPage() {
                   className="w-full border-3 border-black p-2 text-xs font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] outline-none focus:bg-yellow-50"
                 />
               </div>
-
               <div>
                 <label className="mb-1 block text-xs font-black uppercase text-black">
                   Description
@@ -986,7 +1066,6 @@ export default function SprintBoardPage() {
                   className="w-full border-3 border-black p-2 text-xs font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] outline-none focus:bg-yellow-50"
                 />
               </div>
-
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="mb-1 block text-xs font-black uppercase text-black">
@@ -1005,7 +1084,6 @@ export default function SprintBoardPage() {
                     <option value="DONE">DONE</option>
                   </select>
                 </div>
-
                 <div>
                   <label className="mb-1 block text-xs font-black uppercase text-black">
                     Priority
@@ -1024,7 +1102,6 @@ export default function SprintBoardPage() {
                   </select>
                 </div>
               </div>
-
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
@@ -1045,6 +1122,21 @@ export default function SprintBoardPage() {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={deleteTarget !== null}
+        title={
+          deleteTarget?.type === "sprint" ? "Delete Sprint" : "Delete Task"
+        }
+        message={
+          deleteTarget?.type === "sprint"
+            ? `Delete "${selectedSprint?.name}"? This action cannot be undone.`
+            : "Delete this task? This action cannot be undone."
+        }
+        loading={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onClose={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }
