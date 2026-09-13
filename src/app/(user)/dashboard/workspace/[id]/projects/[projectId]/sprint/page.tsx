@@ -28,6 +28,7 @@ import { showToast } from "@/lib/toast";
 import { api } from "@/lib/axios";
 import HypotrochoidLoader from "@/global_components/HypotrochoidLoader";
 import ConfirmModal from "@/global_components/confirmModal";
+import { socket } from "@/lib/socket"; // Socket instance
 
 export interface Task {
   id: string | number;
@@ -43,6 +44,27 @@ export interface Task {
 interface TaskApiResponse extends Omit<Task, "status" | "priority"> {
   task_status: Task["status"];
   priority?: Task["priority"];
+}
+
+interface TaskMovedPayload {
+  sprintId: string | number;
+  taskId: string | number;
+  status: Task["status"];
+}
+
+interface TaskCreatedPayload {
+  sprintId: string | number;
+  task: Task;
+}
+
+interface TaskUpdatedPayload {
+  sprintId: string | number;
+  task: Task;
+}
+
+interface TaskDeletedPayload {
+  sprintId: string | number;
+  taskId: string | number;
 }
 
 export interface Sprint {
@@ -194,6 +216,73 @@ export default function SprintBoardPage() {
     fetchTasks();
   }, [fetchTasks]);
 
+  useEffect(() => {
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    const currentSprintId = selectedSprint?.id;
+    if (!currentSprintId) return;
+
+    socket.emit("join_sprint_room", currentSprintId);
+
+    const isCurrentSprint = (sprintId: string | number) =>
+      String(sprintId) === String(currentSprintId);
+
+    const handleTaskMoved = (data: TaskMovedPayload) => {
+      if (!isCurrentSprint(data.sprintId)) return;
+
+      setTasks((previousTasks) =>
+        previousTasks.map((task) =>
+          String(task.id) === String(data.taskId)
+            ? { ...task, status: data.status }
+            : task,
+        ),
+      );
+      fetchSprints();
+    };
+
+    const handleTaskCreated = (data: TaskCreatedPayload) => {
+      if (!isCurrentSprint(data.sprintId)) return;
+
+      setTasks((previousTasks) => [data.task, ...previousTasks]);
+      fetchSprints();
+    };
+
+    const handleTaskUpdated = (data: TaskUpdatedPayload) => {
+      if (!isCurrentSprint(data.sprintId)) return;
+
+      setTasks((previousTasks) =>
+        previousTasks.map((task) =>
+          String(task.id) === String(data.task.id) ? data.task : task,
+        ),
+      );
+      fetchSprints();
+    };
+
+    const handleTaskDeleted = (data: TaskDeletedPayload) => {
+      if (!isCurrentSprint(data.sprintId)) return;
+
+      setTasks((previousTasks) =>
+        previousTasks.filter((task) => String(task.id) !== String(data.taskId)),
+      );
+      fetchSprints();
+    };
+
+    socket.on("task_moved", handleTaskMoved);
+    socket.on("task_created", handleTaskCreated);
+    socket.on("task_updated", handleTaskUpdated);
+    socket.on("task_deleted", handleTaskDeleted);
+
+    return () => {
+      socket.emit("leave_sprint_room", currentSprintId);
+      socket.off("task_moved", handleTaskMoved);
+      socket.off("task_created", handleTaskCreated);
+      socket.off("task_updated", handleTaskUpdated);
+      socket.off("task_deleted", handleTaskDeleted);
+    };
+  }, [selectedSprint?.id, fetchSprints]);
+
   // --- DRAG AND DROP HANDLER ---
   const handleOnDragEnd = async (result: DropResult) => {
     const { destination, source, draggableId } = result;
@@ -219,6 +308,14 @@ export default function SprintBoardPage() {
       ),
     );
 
+    if (selectedSprint?.id) {
+      socket.emit("task_moved", {
+        sprintId: selectedSprint.id,
+        taskId: draggableId,
+        status: newStatus,
+      });
+    }
+
     // ৪. Backend API Call to Update Task Status
     try {
       await api.patch(
@@ -230,6 +327,13 @@ export default function SprintBoardPage() {
     } catch (err: unknown) {
       // API ব্যর্থ হলে আগের অবস্থায় ফিরিয়ে নেওয়া
       setTasks(previousTasks);
+      if (selectedSprint?.id) {
+        socket.emit("task_moved", {
+          sprintId: selectedSprint.id,
+          taskId: draggableId,
+          status: source.droppableId as Task["status"],
+        });
+      }
       if (isAxiosError(err)) {
         showToast.error(
           err.response?.data?.message || "Failed to update task status",
@@ -347,7 +451,7 @@ export default function SprintBoardPage() {
 
     try {
       setIsSubmitting(true);
-      await api.post(
+      const response = await api.post<{ data: TaskApiResponse }>(
         `/user/workspace/${workspaceId}/project/${projectId}/sprint/${selectedSprint.id}/tasks`,
         {
           title: taskTitle,
@@ -358,8 +462,18 @@ export default function SprintBoardPage() {
       );
       showToast.success("Task created successfully");
       setIsCreateTaskModalOpen(false);
-      fetchTasks();
+      const rawTask = response.data?.data;
+      const createdTask: Task = {
+        ...rawTask,
+        status: rawTask.task_status,
+        priority: rawTask.priority || "MEDIUM",
+      };
+      setTasks((previousTasks) => [createdTask, ...previousTasks]);
       fetchSprints();
+      socket.emit("task_created", {
+        sprintId: selectedSprint.id,
+        task: createdTask,
+      });
     } catch (err: unknown) {
       if (isAxiosError(err)) {
         showToast.error(err.response?.data?.message || "Failed to create task");
@@ -384,7 +498,7 @@ export default function SprintBoardPage() {
 
     try {
       setIsSubmitting(true);
-      await api.patch(
+      const response = await api.patch<{ data: TaskApiResponse }>(
         `/user/workspace/${workspaceId}/project/${projectId}/sprint/${selectedSprint.id}/tasks/${selectedTaskToEdit.id}`,
         {
           title: taskTitle,
@@ -396,8 +510,22 @@ export default function SprintBoardPage() {
       showToast.success("Task updated successfully");
       setIsUpdateTaskModalOpen(false);
       setSelectedTaskToEdit(null);
-      fetchTasks();
+      const rawTask = response.data?.data;
+      const updatedTask: Task = {
+        ...rawTask,
+        status: rawTask.task_status,
+        priority: rawTask.priority || "MEDIUM",
+      };
+      setTasks((previousTasks) =>
+        previousTasks.map((task) =>
+          task.id === updatedTask.id ? updatedTask : task,
+        ),
+      );
       fetchSprints();
+      socket.emit("task_updated", {
+        sprintId: selectedSprint.id,
+        task: updatedTask,
+      });
     } catch (err: unknown) {
       if (isAxiosError(err)) {
         showToast.error(err.response?.data?.message || "Failed to update task");
@@ -421,8 +549,14 @@ export default function SprintBoardPage() {
         `/user/workspace/${workspaceId}/project/${projectId}/sprint/${selectedSprint.id}/tasks/${taskId}`,
       );
       showToast.success("Task deleted successfully");
-      fetchTasks();
+      setTasks((previousTasks) =>
+        previousTasks.filter((task) => task.id !== taskId),
+      );
       fetchSprints();
+      socket.emit("task_deleted", {
+        sprintId: selectedSprint.id,
+        taskId,
+      });
     } catch (err: unknown) {
       if (isAxiosError(err)) {
         showToast.error(err.response?.data?.message || "Failed to delete task");
