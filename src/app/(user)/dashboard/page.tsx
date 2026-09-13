@@ -2,8 +2,16 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { Plus, Folder, Crown, Sparkles, ArrowRight } from "lucide-react";
+import {
+  Plus,
+  Folder,
+  Crown,
+  Sparkles,
+  ArrowRight,
+  LogOut,
+} from "lucide-react";
 import { isAxiosError } from "axios";
+import { useRouter } from "next/navigation";
 import { api } from "@/lib/axios";
 import CreateWorkspaceModal from "../_components/CreateWorkspaceModal";
 import { useAuthModal } from "@/context/auth.context";
@@ -19,8 +27,10 @@ export default function DashboardPage() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
+  const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false);
 
-  const { user } = useAuthModal();
+  const router = useRouter();
+  const { user, setUser, setIsAuthenticated } = useAuthModal();
 
   const fetchWorkspaces = useCallback(async () => {
     try {
@@ -46,8 +56,62 @@ export default function DashboardPage() {
     initialFetch();
   }, [fetchWorkspaces]);
 
+  useEffect(() => {
+    const sessionId = new URLSearchParams(window.location.search).get(
+      "session_id",
+    );
+    if (!sessionId) return;
+
+    const confirmPayment = async () => {
+      try {
+        const response = await api.post("/user/payment/confirm", {
+          sessionId,
+        });
+        const confirmedUser = response.data?.data;
+
+        setUser((currentUser) =>
+          currentUser && confirmedUser
+            ? {
+                ...currentUser,
+                package: confirmedUser.package,
+                isPremium: confirmedUser.isPremium,
+              }
+            : currentUser,
+        );
+        showToast.success("Payment completed. Your plan is now active.");
+        router.replace("/dashboard");
+      } catch (error: unknown) {
+        showToast.error(
+          isAxiosError(error)
+            ? error.response?.data?.message || "Payment confirmation failed."
+            : "Payment confirmation failed.",
+        );
+      }
+    };
+
+    confirmPayment();
+  }, [router, setUser]);
+
   const handleSuccess = () => {
     fetchWorkspaces();
+  };
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      await api.post("/auth/logout");
+      setUser(null);
+      setIsAuthenticated(false);
+      router.replace("/");
+    } catch (error: unknown) {
+      if (isAxiosError(error)) {
+        showToast.error(error.response?.data?.message || "Failed to log out.");
+      } else {
+        showToast.error("Failed to log out.");
+      }
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   if (loading) {
@@ -81,6 +145,15 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="flex items-center gap-2 border-3 border-black bg-[#FF6B6B] px-5 py-2.5 font-black uppercase text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-1 active:translate-y-1 active:shadow-none"
+            >
+              <LogOut className="h-5 w-5 stroke-3" />
+              <span>{isLoggingOut ? "Logging out..." : "Logout"}</span>
+            </button>
+
             {user?.package !== "ENTERPRISE" && (
               <Link
                 href="/dashboard/pricing"

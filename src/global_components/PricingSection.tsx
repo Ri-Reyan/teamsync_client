@@ -4,81 +4,124 @@ import React, { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Check, Sparkles } from "lucide-react";
+import { api } from "@/lib/axios";
+import { showToast } from "@/lib/toast";
+import { useAuthModal } from "@/context/auth.context";
 
 gsap.registerPlugin(ScrollTrigger);
 
-interface PricingTier {
+export interface PricingTier {
   name: string;
+  package: "STARTER" | "PROFESSIONAL" | "ENTERPRISE";
   tagline: string;
   price: string;
-  period?: string;
-  popular?: boolean;
+  originalPrice?: string;
+  period: string;
+  badge?: string;
+  popular: boolean;
   bgColor: string;
   btnBg: string;
   btnText: string;
   features: string[];
 }
 
-const pricingPlans: PricingTier[] = [
+export const pricingPlans: PricingTier[] = [
   {
     name: "STARTER",
-    tagline: "Perfect for small teams just getting started",
+    package: "STARTER",
+    tagline: "Perfect for freelancers & small personal projects",
     price: "$0",
-    period: "/forever",
+    period: "pay once, free forever",
     popular: false,
     bgColor: "bg-white",
     btnBg: "bg-[#FF6B6B]",
     btnText: "text-white",
     features: [
       "Up to 5 team members",
-      "Isolated Workspace (Single Tenant)",
+      "Shared Cloud Database",
       "Real-time Kanban Sync (Socket.io)",
       "Basic AI Task Summaries (10/mo)",
-      "Community Support",
+      "Community Forum Support",
       "Mobile & Web access",
     ],
   },
   {
     name: "PROFESSIONAL",
-    tagline: "For growing teams that need more power",
-    price: "$49",
-    period: "/mo",
+    package: "PROFESSIONAL",
+    tagline: "Pay once and get lifetime access for your growing team",
+    price: "$149",
+    originalPrice: "$299",
+    period: "one-time payment, lifetime access",
+    badge: "Most Realistic",
     popular: true,
     bgColor: "bg-black text-white",
     btnBg: "bg-[#FFD93D]",
     btnText: "text-black",
     features: [
-      "Up to 50 team members",
-      "Unlimited Isolated Workspaces",
-      "Sub-second Real-time Socket Sync",
-      "Unlimited AI Weekly Digests & Summaries",
-      "RBAC Role-Based Access Control",
-      "Priority 24/7 Support",
-      "Custom Workflow Automation",
-      "Full API Access & Webhooks",
+      "Up to 25 team members",
+      "Multi-workspace Isolation",
+      "Sub-second Socket Sync",
+      "Unlimited AI Summaries & Weekly Digests",
+      "Role-Based Access Control (RBAC)",
+      "Email & Discord Priority Support",
+      "Custom Webhooks & REST API Access",
+      "All Future Core Updates Included",
     ],
   },
   {
-    name: "ENTERPRISE",
-    tagline: "For organizations that need advanced features",
-    price: "Custom",
+    name: "TEAM / AGENCY",
+    package: "ENTERPRISE",
+    tagline: "For agencies & studios managing multiple clients",
+    price: "$399",
+    originalPrice: "$699",
+    period: "one-time license fee",
+    badge: "Lifetime Deal",
     popular: false,
     bgColor: "bg-white",
     btnBg: "bg-[#FF6B6B]",
     btnText: "text-white",
     features: [
       "Unlimited team members",
-      "Dedicated Database & SLA Guarantees",
-      "Custom AI Model Fine-tuning",
-      "Dedicated Account Manager",
-      "Custom Integrations & Audit Logs",
-      "Custom Contract & Billing",
+      "Unlimited Isolated Workspaces",
+      "High-Priority API & Socket Quotas",
+      "Advanced Audit Logs & Activity History",
+      "Direct Developer-to-Client Support",
+      "Custom Brand Logo on Dashboard",
     ],
   },
 ];
-
 export default function PricingSection() {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const { isAuthenticated, openAuthModal } = useAuthModal();
+
+  const handlePlanSelection = async (plan: PricingTier) => {
+    if (plan.package === "STARTER") {
+      openAuthModal("register");
+      return;
+    }
+
+    if (!isAuthenticated) {
+      openAuthModal("login");
+      return;
+    }
+
+    try {
+      const response = await api.post("/user/payment/checkout", {
+        package: plan.package,
+      });
+
+      const checkoutUrl = response.data?.data?.url;
+      if (!checkoutUrl) {
+        throw new Error("Checkout URL was not returned");
+      }
+
+      window.location.assign(checkoutUrl);
+    } catch (error: unknown) {
+      showToast.error(
+        error instanceof Error ? error.message : "Unable to start payment.",
+      );
+    }
+  };
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -107,7 +150,7 @@ export default function PricingSection() {
         },
       });
 
-      // 3. Sequential Staggered Features Animation (Blank to Visible One-by-One)
+      // 3. Sequential Staggered Features Animation
       pricingPlans.forEach((_, cardIndex) => {
         const featureItems = `.feature-item-${cardIndex}`;
 
@@ -137,12 +180,12 @@ export default function PricingSection() {
         {/* Section Title Header */}
         <div className="pricing-header text-center max-w-3xl mx-auto mb-16 space-y-4">
           <h2 className="text-4xl sm:text-6xl font-black uppercase tracking-tight text-black">
-            SIMPLE, TRANSPARENT <br />
-            PRICING
+            LIFETIME ACCESS, <br />
+            NO SUBSCRIPTIONS
           </h2>
 
           <div className="inline-block border-2 border-black bg-[#FFD93D] px-4 py-1.5 neo-shadow-sm font-black text-xs sm:text-sm uppercase">
-            Choose the plan that&apos;s right for your team
+            Pay once and own your workspace forever
           </div>
         </div>
 
@@ -155,7 +198,7 @@ export default function PricingSection() {
             >
               {/* Most Popular Badge */}
               {plan.popular && (
-                <div className="absolute -top-5 left-1/2 -translate-x-1/2 border-2 border-black bg-[#FFD93D] px-4 py-1 font-black text-xs uppercase tracking-wider text-black neo-shadow-sm flex items-center gap-1">
+                <div className="absolute -top-5 left-1/2 -translate-x-1/2 border-2 border-black bg-[#FFD93D] px-4 py-1 font-black text-xs uppercase tracking-wider text-black neo-shadow-sm flex items-center gap-1 z-10">
                   <Sparkles className="size-3.5 fill-black" />
                   <span>MOST POPULAR</span>
                 </div>
@@ -163,28 +206,40 @@ export default function PricingSection() {
 
               <div>
                 {/* Plan Title & Tagline */}
-                <div className="text-center pb-6 border-b-2 border-current">
+                <div className="text-center pb-6 border-b-2 border-current relative">
+                  {/* Discount / Custom Badge */}
+                  {plan.badge && (
+                    <span className="absolute right-0 top-0 border-2 border-current bg-[#FF6B6B] text-white text-[10px] font-black uppercase px-2 py-0.5 neo-shadow-sm">
+                      {plan.badge}
+                    </span>
+                  )}
+
                   <h3 className="text-2xl font-black uppercase tracking-wider mb-2">
                     {plan.name}
                   </h3>
-                  <p className="text-xs font-bold opacity-80 min-h-8">
+                  <p className="text-xs font-bold opacity-80 min-h-8 flex items-center justify-center">
                     {plan.tagline}
                   </p>
                 </div>
 
                 {/* Price Display */}
-                <div className="text-center py-6 border-b-2 border-current">
-                  <span className="text-5xl font-black tracking-tight">
-                    {plan.price}
-                  </span>
-                  {plan.period && (
-                    <span className="text-sm font-bold opacity-80">
-                      {plan.period}
+                <div className="text-center py-6 border-b-2 border-current space-y-1">
+                  <div className="flex items-center justify-center gap-2">
+                    {plan.originalPrice && (
+                      <span className="text-xl font-bold line-through opacity-60">
+                        {plan.originalPrice}
+                      </span>
+                    )}
+                    <span className="text-5xl font-black tracking-tight">
+                      {plan.price}
                     </span>
-                  )}
+                  </div>
+                  <div className="text-xs font-black uppercase tracking-wide opacity-80">
+                    {plan.period}
+                  </div>
                 </div>
 
-                {/* Features List (One after one animated) */}
+                {/* Features List */}
                 <ul className="py-6 space-y-3">
                   {plan.features.map((feature, fIdx) => (
                     <li
@@ -203,11 +258,12 @@ export default function PricingSection() {
               {/* Action Button */}
               <div className="pt-6 border-t-2 border-current">
                 <button
-                  className={`w-full neo-btn py-3.5 px-4 font-black uppercase text-sm tracking-wider ${plan.btnBg} ${plan.btnText}`}
+                  onClick={() => handlePlanSelection(plan)}
+                  className={`w-full neo-btn py-3.5 px-4 font-black uppercase text-sm tracking-wider cursor-pointer ${plan.btnBg} ${plan.btnText}`}
                 >
-                  {plan.name === "ENTERPRISE"
-                    ? "CONTACT SALES"
-                    : "START FREE TRIAL"}
+                  {plan.package === "STARTER"
+                    ? "GET STARTED FREE"
+                    : "GET LIFETIME ACCESS"}
                 </button>
               </div>
             </div>
