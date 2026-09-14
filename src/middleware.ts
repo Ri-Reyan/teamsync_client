@@ -6,9 +6,9 @@ export async function middleware(request: NextRequest) {
   const token = request.cookies.get("accessToken")?.value;
   const { pathname } = request.nextUrl;
 
-  // ১. অনঅথরাইজড ইউজারকে প্রটেক্টেড রাউট থেকে হোমে পাঠানো
+  // Admin page renders its own login screen when no admin session exists.
   if (!token) {
-    if (pathname.startsWith("/dashboard") || pathname.startsWith("/admin")) {
+    if (pathname.startsWith("/dashboard")) {
       return NextResponse.redirect(new URL("/", request.url));
     }
     return NextResponse.next();

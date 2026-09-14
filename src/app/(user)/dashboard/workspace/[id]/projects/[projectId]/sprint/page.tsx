@@ -29,6 +29,7 @@ import { api } from "@/lib/axios";
 import HypotrochoidLoader from "@/global_components/HypotrochoidLoader";
 import ConfirmModal from "@/global_components/confirmModal";
 import { socket } from "@/lib/socket"; // Socket instance
+import ProjectAIAssistant from "@/app/(user)/_components/ProjectAIAssistant";
 
 export interface Task {
   id: string | number;
@@ -689,6 +690,8 @@ export default function SprintBoardPage() {
 
         {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-3">
+          <ProjectAIAssistant workspaceId={workspaceId} projectId={projectId} />
+
           <button
             onClick={() => {
               setSprintName("");

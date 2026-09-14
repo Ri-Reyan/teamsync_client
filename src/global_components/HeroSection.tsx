@@ -37,6 +37,16 @@ export default function HeroSection() {
 
       {/* Foreground Hero Content Content */}
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <button
+          type="button"
+          onClick={() => router.push("/admin/dashboard")}
+          className="absolute right-4 top-0 z-20 inline-flex min-h-11 items-center gap-2 border-2 border-black bg-white px-3 py-2 font-black uppercase text-xs shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition hover:-translate-y-0.5 hover:bg-[#B9F227] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:outline-none focus:ring-4 focus:ring-[#62D7FF] sm:right-6 sm:px-4"
+          aria-label="Login as admin"
+        >
+          <ShieldCheck className="size-4" />
+          <span>Admin login</span>
+        </button>
+
         {/* Top Floating Badge */}
         <div className="flex justify-center mb-6">
           <div className="inline-flex -rotate-2 items-center gap-2 border-4 border-black bg-[#FFD93D] px-4 py-1.5 neo-shadow font-black uppercase text-xs sm:text-sm tracking-wider">
