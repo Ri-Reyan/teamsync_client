@@ -56,8 +56,7 @@ export default function RegisterForm() {
       const response = await api.post("/auth/register", formData);
 
       // Response Structure হ্যান্ডলিং (data.data.email অথবা data.email)
-      const userEmail =
-        response.data?.data?.email || response.data?.email || formData.email;
+      const userEmail = response.data?.data?.email || formData.email;
       if (response.data.success) {
         setPendingEmail(userEmail);
       }

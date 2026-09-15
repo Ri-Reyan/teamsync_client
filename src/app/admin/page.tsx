@@ -10,7 +10,6 @@ import {
   FolderKanban,
   KeyRound,
   LayoutDashboard,
-  Loader2,
   LogOut,
   Mail,
   RefreshCw,
@@ -23,6 +22,7 @@ import {
 import { isAxiosError } from "axios";
 import { api } from "@/lib/axios";
 import { showToast } from "@/lib/toast";
+import HypotrochoidLoader from "@/global_components/HypotrochoidLoader";
 
 interface DashboardStats {
   totalUsers: number;
@@ -46,6 +46,7 @@ interface AdminForm {
   username: string;
   email: string;
   password: string;
+  role: string;
 }
 
 const emptyStats: DashboardStats = {
@@ -56,7 +57,12 @@ const emptyStats: DashboardStats = {
   totalAmountReceived: 0,
 };
 
-const emptyAdminForm: AdminForm = { username: "", email: "", password: "" };
+const emptyAdminForm: AdminForm = {
+  username: "",
+  email: "",
+  password: "",
+  role: "ADMIN",
+};
 
 function errorMessage(error: unknown, fallback: string) {
   return isAxiosError(error)
@@ -73,15 +79,15 @@ function formatMoney(amount: number) {
 }
 
 function LoginScreen({ onLogin }: { onLogin: () => Promise<void> }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("admin@example.com");
+  const [password, setPassword] = useState("admin1234");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSubmitting(true);
     try {
-      await api.post("/admin/login", { email, password });
+      await api.post("/auth/login", { email, password });
       await onLogin();
     } catch (error: unknown) {
       showToast.error(errorMessage(error, "Unable to sign in as admin."));
@@ -173,7 +179,7 @@ function LoginScreen({ onLogin }: { onLogin: () => Promise<void> }) {
             className="flex min-h-14 w-full cursor-pointer items-center justify-center gap-3 border-2 border-[#101820] bg-[#B9F227] px-5 font-black uppercase transition duration-200 hover:bg-[#62D7FF] disabled:cursor-wait disabled:opacity-60"
           >
             {isSubmitting ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
+              <HypotrochoidLoader size={18} color="#101820" />
             ) : (
               <ArrowUpRight className="h-5 w-5" />
             )}
@@ -237,7 +243,7 @@ function CreateAdminPanel({
     event.preventDefault();
     setIsSubmitting(true);
     try {
-      await api.post("/admin/admins", form);
+      await api.post("/auth/register", form);
       setIsOtpStep(true);
       showToast.success("Verification code sent to the new admin email.");
     } catch (error: unknown) {
@@ -251,7 +257,7 @@ function CreateAdminPanel({
     event.preventDefault();
     setIsSubmitting(true);
     try {
-      await api.post("/admin/admins/verify", { email: form.email, otp });
+      await api.post("/auth/verify-email", { email: form.email, otp });
       showToast.success("New admin created successfully.");
       onCreated();
     } catch (error: unknown) {
@@ -307,7 +313,7 @@ function CreateAdminPanel({
               disabled={isSubmitting}
               className="mt-3 flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 border-2 border-[#101820] bg-[#62D7FF] font-black uppercase hover:bg-[#B9F227] disabled:opacity-60"
             >
-              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+              {isSubmitting && <HypotrochoidLoader size={14} color="#101820" />}
               Send verification code
             </button>
           </form>
@@ -338,7 +344,7 @@ function CreateAdminPanel({
               disabled={isSubmitting}
               className="mt-5 flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 border-2 border-[#101820] bg-[#B9F227] font-black uppercase hover:bg-[#62D7FF] disabled:opacity-60"
             >
-              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+              {isSubmitting && <HypotrochoidLoader size={14} color="#101820" />}
               Verify and create admin
             </button>
           </form>
@@ -419,8 +425,9 @@ export default function AdminPage() {
   if (isLoading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#101820] text-[#B9F227]">
-        <Loader2
-          className="h-10 w-10 animate-spin"
+        <HypotrochoidLoader
+          size={52}
+          color="#B9F227"
           aria-label="Loading admin console"
         />
       </main>

@@ -921,7 +921,7 @@ export default function SprintBoardPage() {
       {/* (আগের সম্পূর্ণ Modal JSX কোড অপরিবর্তিত আছে) */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="w-full max-w-md border-4 border-black bg-white p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+          <div className="max-h-[calc(100vh-2rem)] w-[calc(100%-2rem)] max-w-md overflow-y-auto border-4 border-black bg-white p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] sm:p-6">
             <div className="mb-4 flex items-center justify-between border-b-4 border-black pb-2">
               <h3 className="text-base font-black uppercase text-black">
                 Create New Sprint
@@ -947,7 +947,7 @@ export default function SprintBoardPage() {
                   className="w-full border-3 border-black p-2 text-xs font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] outline-none focus:bg-yellow-50"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label className="mb-1 block text-xs font-black uppercase text-black">
                     Start Date
@@ -996,7 +996,7 @@ export default function SprintBoardPage() {
 
       {isUpdateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="w-full max-w-md border-4 border-black bg-white p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+          <div className="max-h-[calc(100vh-2rem)] w-[calc(100%-2rem)] max-w-md overflow-y-auto border-4 border-black bg-white p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] sm:p-6">
             <div className="mb-4 flex items-center justify-between border-b-4 border-black pb-2">
               <h3 className="text-base font-black uppercase text-black">
                 Update Sprint
@@ -1021,7 +1021,7 @@ export default function SprintBoardPage() {
                   className="w-full border-3 border-black p-2 text-xs font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] outline-none focus:bg-yellow-50"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label className="mb-1 block text-xs font-black uppercase text-black">
                     Start Date
@@ -1070,7 +1070,7 @@ export default function SprintBoardPage() {
 
       {isCreateTaskModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="w-full max-w-md border-4 border-black bg-white p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+          <div className="max-h-[calc(100vh-2rem)] w-[calc(100%-2rem)] max-w-md overflow-y-auto border-4 border-black bg-white p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] sm:p-6">
             <div className="mb-4 flex items-center justify-between border-b-4 border-black pb-2">
               <h3 className="text-base font-black uppercase text-black">
                 Create Task
@@ -1108,7 +1108,7 @@ export default function SprintBoardPage() {
                   className="w-full border-3 border-black p-2 text-xs font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] outline-none focus:bg-yellow-50"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label className="mb-1 block text-xs font-black uppercase text-black">
                     Status
@@ -1167,7 +1167,7 @@ export default function SprintBoardPage() {
 
       {isUpdateTaskModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="w-full max-w-md border-4 border-black bg-white p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+          <div className="max-h-[calc(100vh-2rem)] w-[calc(100%-2rem)] max-w-md overflow-y-auto border-4 border-black bg-white p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] sm:p-6">
             <div className="mb-4 flex items-center justify-between border-b-4 border-black pb-2">
               <h3 className="text-base font-black uppercase text-black">
                 Edit Task
@@ -1203,7 +1203,7 @@ export default function SprintBoardPage() {
                   className="w-full border-3 border-black p-2 text-xs font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] outline-none focus:bg-yellow-50"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label className="mb-1 block text-xs font-black uppercase text-black">
                     Status

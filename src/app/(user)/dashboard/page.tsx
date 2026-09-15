@@ -123,7 +123,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FFFDF5] p-6 sm:p-10 font-sans text-black">
+    <div className="min-h-screen bg-[#FFFDF5] p-4 sm:p-10 font-sans text-black">
       <div className="mx-auto max-w-6xl space-y-8">
         {/* Header Section */}
         <div className="flex flex-col gap-4 border-b-4 border-black pb-6 md:flex-row md:items-center md:justify-between">
@@ -131,7 +131,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-2">
               <Link
                 href={"/"}
-                className="text-3xl sm:text-4xl font-black uppercase tracking-tight"
+                className="text-2xl font-black uppercase tracking-tight sm:text-4xl"
               >
                 Dashboard
               </Link>

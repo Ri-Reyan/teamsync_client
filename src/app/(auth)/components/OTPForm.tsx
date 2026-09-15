@@ -37,6 +37,7 @@ const OTPForm = ({ email }: OTPFormProps) => {
         setIsAuthenticated(true);
         closeAuthModal();
         router.refresh();
+        router.push("/dashboard");
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {

@@ -2,16 +2,10 @@
 
 import { isAxiosError } from "axios";
 import { useEffect, useRef, useState } from "react";
-import {
-  Bot,
-  LoaderCircle,
-  MessageCircle,
-  Send,
-  Sparkles,
-  X,
-} from "lucide-react";
+import { Bot, MessageCircle, Send, Sparkles, X } from "lucide-react";
 import { api } from "@/lib/axios";
 import { showToast } from "@/lib/toast";
+import HypotrochoidLoader from "@/global_components/HypotrochoidLoader";
 
 type Conversation = {
   topic: string;
@@ -197,7 +191,7 @@ export default function ProjectAIAssistant({
                 className="mt-5 flex w-full items-center justify-center gap-2 border-3 border-black bg-[#6BCB77] px-4 py-3 text-xs font-black uppercase shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none disabled:cursor-wait disabled:opacity-60"
               >
                 {isGeneratingSummary ? (
-                  <LoaderCircle className="h-4 w-4 animate-spin" />
+                  <HypotrochoidLoader size={16} color="#000000" />
                 ) : (
                   <Sparkles className="h-4 w-4 fill-black" />
                 )}
@@ -224,7 +218,7 @@ export default function ProjectAIAssistant({
 
               {isLoadingHistory && (
                 <div className="flex items-center gap-2 text-xs font-black uppercase text-gray-500">
-                  <LoaderCircle className="h-4 w-4 animate-spin" /> Loading
+                  <HypotrochoidLoader size={16} color="#6B7280" /> Loading
                   conversation...
                 </div>
               )}
@@ -260,7 +254,7 @@ export default function ProjectAIAssistant({
 
               {isSending && (
                 <div className="flex items-center gap-2 border-3 border-black bg-white p-4 text-xs font-black uppercase shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-                  <LoaderCircle className="h-4 w-4 animate-spin" /> Thinking...
+                  <HypotrochoidLoader size={16} color="#000000" /> Thinking...
                 </div>
               )}
             </div>

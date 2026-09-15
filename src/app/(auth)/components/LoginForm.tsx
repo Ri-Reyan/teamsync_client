@@ -14,7 +14,10 @@ export default function LoginForm() {
   const router = useRouter();
   const { setAuthMode, closeAuthModal, setUser, setIsAuthenticated } =
     useAuthModal();
-  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [formData, setFormData] = useState({
+    email: "user@example.com",
+    password: "user1234",
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -38,7 +41,7 @@ export default function LoginForm() {
         setIsAuthenticated(true);
         closeAuthModal();
         router.refresh(); // Global auth state sync করার জন্য
-        router.push("/");
+        router.push("/dashboard");
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {

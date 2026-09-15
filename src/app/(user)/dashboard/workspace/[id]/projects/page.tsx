@@ -290,7 +290,7 @@ const WorkspaceProjectsPage = () => {
           Projects
         </h1>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 sm:justify-end">
           <button
             onClick={() =>
               setActionDetail({
@@ -299,7 +299,7 @@ const WorkspaceProjectsPage = () => {
                 message: "Are you sure you want to delete this workspace?",
               })
             }
-            className="flex items-center gap-2 border-2 border-black bg-[#FF6B6B] px-4 py-2 text-xs font-black uppercase text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-x-1 active:translate-y-1 active:shadow-none"
+            className="flex items-center gap-2 border-2 border-black bg-[#FF6B6B] px-3 py-2 text-xs font-black uppercase text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-x-1 active:translate-y-1 active:shadow-none sm:px-4"
           >
             <Trash2 className="h-4 w-4 stroke-[2.5]" />
             <span>Delete Workspace</span>
@@ -313,7 +313,7 @@ const WorkspaceProjectsPage = () => {
                 message: "Are you sure you want to leave from this workspace?",
               })
             }
-            className="flex items-center gap-2 border-2 border-black bg-[#FF6B6B] px-4 py-2 text-xs font-black uppercase text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-x-1 active:translate-y-1 active:shadow-none"
+            className="flex items-center gap-2 border-2 border-black bg-[#FF6B6B] px-3 py-2 text-xs font-black uppercase text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-x-1 active:translate-y-1 active:shadow-none sm:px-4"
           >
             <LogOut className="h-4 w-4 stroke-[2.5]" />
             <span>Leave Workspace</span>
@@ -321,7 +321,7 @@ const WorkspaceProjectsPage = () => {
 
           <button
             onClick={handleOpenTransferModal}
-            className="flex items-center gap-2 border-2 border-black bg-[#FFD93D] px-4 py-2 text-xs font-black uppercase text-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-x-1 active:translate-y-1 active:shadow-none"
+            className="flex items-center gap-2 border-2 border-black bg-[#FFD93D] px-3 py-2 text-xs font-black uppercase text-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-x-1 active:translate-y-1 active:shadow-none sm:px-4"
           >
             <ArrowLeftRight className="h-4 w-4 stroke-[2.5]" />
             <span>Transfer Ownership</span>
@@ -329,7 +329,7 @@ const WorkspaceProjectsPage = () => {
 
           <button
             onClick={() => setIsCreateProjectOpen(true)}
-            className="flex items-center gap-2 border-2 border-black bg-[#6BCB77] px-4 py-2 text-xs font-black uppercase text-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-x-1 active:translate-y-1 active:shadow-none"
+            className="flex items-center gap-2 border-2 border-black bg-[#6BCB77] px-3 py-2 text-xs font-black uppercase text-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-x-1 active:translate-y-1 active:shadow-none sm:px-4"
           >
             <Plus className="h-4 w-4 stroke-3" />
             <span>Create Project</span>

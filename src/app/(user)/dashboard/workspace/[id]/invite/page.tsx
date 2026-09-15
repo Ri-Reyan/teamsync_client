@@ -83,13 +83,13 @@ export default function InvitationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FFFDF5] p-6 sm:p-10 font-sans text-black">
+    <div className="min-h-screen bg-[#FFFDF5] p-4 sm:p-10 font-sans text-black">
       <div className="mx-auto max-w-5xl space-y-8">
         {/* Header */}
         <div className="flex flex-col gap-4 border-b-4 border-black pb-6 md:flex-row md:items-center md:justify-between">
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-tight">
+              <h1 className="text-2xl font-black uppercase tracking-tight sm:text-4xl">
                 Team Invitations
               </h1>
               <span className="border-2 border-black bg-[#FFD93D] px-2 py-0.5 text-xs font-black uppercase text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
@@ -147,11 +147,11 @@ export default function InvitationsPage() {
               {invitations.map((invite) => (
                 <div
                   key={invite.id}
-                  className="flex items-center justify-between border-3 border-black bg-white p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]"
+                  className="flex min-w-0 items-center justify-between gap-3 border-3 border-black bg-white p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]"
                 >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-black text-sm text-black truncate max-w-50 sm:max-w-55">
+                  <div className="min-w-0 space-y-1">
+                    <div className="flex min-w-0 flex-wrap items-center gap-2">
+                      <span className="min-w-0 max-w-full truncate font-black text-sm text-black sm:max-w-55">
                         {invite.member_email}
                       </span>
                       <span className="border border-black bg-[#FFD93D] px-1.5 py-0.2 text-[10px] font-black uppercase">
