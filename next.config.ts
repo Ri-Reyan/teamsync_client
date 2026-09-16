@@ -8,10 +8,16 @@ const nextConfig: NextConfig = {
     ],
   },
   async rewrites() {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL?.trim().replace(/\/$/, "");
+
+    if (!apiUrl) {
+      return [];
+    }
+
     return [
       {
-        source: "/api/v1/:path*", // ফ্রন্টএন্ড থেকে যে রুটে রিকোয়েস্ট পাঠাবে
-        destination: `${process.env.NEXT_PUBLIC_API_URL}/api/v1/:path*`, // তোমার মূল ব্যাকএন্ডের প্রডাকশন URL (সামনের স্ল্যাশ বজায় রাখবে)
+        source: "/api/v1/:path*",
+        destination: `${apiUrl}/api/v1/:path*`,
       },
     ];
   },

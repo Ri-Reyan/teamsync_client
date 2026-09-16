@@ -17,7 +17,7 @@ export default function SSOCallbackPage() {
     setIsAuthenticated(true);
 
     const timer = setTimeout(() => {
-      router.push("/");
+      router.push("/dashboard");
     }, 1000);
 
     return () => clearTimeout(timer);
