@@ -414,7 +414,7 @@ export default function AdminPage() {
 
   const logout = async () => {
     try {
-      await api.post("/admin/logout");
+      await api.post("/auth/logout");
       setIsAuthenticated(false);
       showToast.success("Signed out of admin console.");
     } catch (error: unknown) {
