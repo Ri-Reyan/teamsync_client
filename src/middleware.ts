@@ -8,6 +8,8 @@ export async function middleware(request: NextRequest) {
 
   // Admin page renders its own login screen when no admin session exists.
   if (!token) {
+    console.log("token");
+
     if (pathname.startsWith("/dashboard")) {
       return NextResponse.redirect(new URL("/", request.url));
     }
