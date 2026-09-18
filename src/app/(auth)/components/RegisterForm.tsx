@@ -73,7 +73,7 @@ export default function RegisterForm() {
   const handleGoogleLogin = () => {
     // const backendUrl = process.env.NEXT_PUBLIC_API_URL;
     // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-    window.location.href = "/api/auth/google";
+    window.location.href = "/api/v1/auth/google";
   };
 
   if (pendingEmail) {
