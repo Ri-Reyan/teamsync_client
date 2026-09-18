@@ -12,6 +12,11 @@ const getPusher = async () => {
   pusher = new Pusher(response.data.data.key, {
     cluster: response.data.data.cluster,
     authEndpoint: `${process.env.NEXT_PUBLIC_API_URL}/realtime/auth`,
+    auth: {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+    },
   });
   return pusher;
 };
