@@ -91,6 +91,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       router.replace("/dashboard");
       return;
     }
+
+    if (isAuthenticated) {
+      router.replace("/dashboard");
+    }
   }, [loading, isAuthenticated, user, pathname, router]);
 
   const value = useMemo(
@@ -108,6 +112,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user,
       setUser,
       loading,
+      setLoading,
       isAuthenticated,
       setIsAuthenticated,
     }),
