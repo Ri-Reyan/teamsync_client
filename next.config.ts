@@ -11,11 +11,12 @@ const nextConfig: NextConfig = {
       {
         source: "/api/auth/google/:path*",
         destination:
-          "https://teamsync-server-lovat.vercel.app/api/auth/google/:path*",
+          "https://teamsync-server-lovat.vercel.app/api/v1/auth/google/:path*",
       },
       {
         source: "/api/auth/google",
-        destination: "https://teamsync-server-lovat.vercel.app/api/auth/google",
+        destination:
+          "https://teamsync-server-lovat.vercel.app/api/v1/auth/google",
       },
     ];
   },
