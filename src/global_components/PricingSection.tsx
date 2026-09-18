@@ -39,7 +39,7 @@ export const pricingPlans: PricingTier[] = [
     features: [
       "Up to 5 team members",
       "Shared Cloud Database",
-      "Real-time Kanban Sync (Socket.io)",
+      "Real-time Kanban Sync (Pusher)",
       "Basic AI Task Summaries (10/mo)",
       "Community Forum Support",
       "Mobile & Web access",
@@ -60,7 +60,7 @@ export const pricingPlans: PricingTier[] = [
     features: [
       "Up to 25 team members",
       "Multi-workspace Isolation",
-      "Sub-second Socket Sync",
+      "Sub-second Pusher Sync",
       "Unlimited AI Summaries & Weekly Digests",
       "Role-Based Access Control (RBAC)",
       "Email & Discord Priority Support",
@@ -83,7 +83,7 @@ export const pricingPlans: PricingTier[] = [
     features: [
       "Unlimited team members",
       "Unlimited Isolated Workspaces",
-      "High-Priority API & Socket Quotas",
+      "High-Priority API & Pusher Quotas",
       "Advanced Audit Logs & Activity History",
       "Direct Developer-to-Client Support",
       "Custom Brand Logo on Dashboard",

@@ -28,7 +28,7 @@ import { showToast } from "@/lib/toast";
 import { api } from "@/lib/axios";
 import HypotrochoidLoader from "@/global_components/HypotrochoidLoader";
 import ConfirmModal from "@/global_components/confirmModal";
-import { socket } from "@/lib/socket"; // Socket instance
+import { subscribeToSprint } from "@/lib/socket";
 import ProjectAIAssistant from "@/app/(user)/_components/ProjectAIAssistant";
 
 export interface Task {
@@ -218,14 +218,10 @@ export default function SprintBoardPage() {
   }, [fetchTasks]);
 
   useEffect(() => {
-    if (!socket.connected) {
-      socket.connect();
-    }
-
     const currentSprintId = selectedSprint?.id;
     if (!currentSprintId) return;
-
-    socket.emit("join_sprint_room", currentSprintId);
+    let cancelled = false;
+    let unsubscribe = () => {};
 
     const isCurrentSprint = (sprintId: string | number) =>
       String(sprintId) === String(currentSprintId);
@@ -270,17 +266,19 @@ export default function SprintBoardPage() {
       fetchSprints();
     };
 
-    socket.on("task_moved", handleTaskMoved);
-    socket.on("task_created", handleTaskCreated);
-    socket.on("task_updated", handleTaskUpdated);
-    socket.on("task_deleted", handleTaskDeleted);
+    subscribeToSprint(currentSprintId, {
+      task_moved: handleTaskMoved,
+      task_created: handleTaskCreated,
+      task_updated: handleTaskUpdated,
+      task_deleted: handleTaskDeleted,
+    }).then((cleanup) => {
+      if (cancelled) cleanup();
+      else unsubscribe = cleanup;
+    });
 
     return () => {
-      socket.emit("leave_sprint_room", currentSprintId);
-      socket.off("task_moved", handleTaskMoved);
-      socket.off("task_created", handleTaskCreated);
-      socket.off("task_updated", handleTaskUpdated);
-      socket.off("task_deleted", handleTaskDeleted);
+      cancelled = true;
+      unsubscribe();
     };
   }, [selectedSprint?.id, fetchSprints]);
 
@@ -309,14 +307,6 @@ export default function SprintBoardPage() {
       ),
     );
 
-    if (selectedSprint?.id) {
-      socket.emit("task_moved", {
-        sprintId: selectedSprint.id,
-        taskId: draggableId,
-        status: newStatus,
-      });
-    }
-
     // ৪. Backend API Call to Update Task Status
     try {
       await api.patch(
@@ -328,13 +318,6 @@ export default function SprintBoardPage() {
     } catch (err: unknown) {
       // API ব্যর্থ হলে আগের অবস্থায় ফিরিয়ে নেওয়া
       setTasks(previousTasks);
-      if (selectedSprint?.id) {
-        socket.emit("task_moved", {
-          sprintId: selectedSprint.id,
-          taskId: draggableId,
-          status: source.droppableId as Task["status"],
-        });
-      }
       if (isAxiosError(err)) {
         showToast.error(
           err.response?.data?.message || "Failed to update task status",
@@ -471,10 +454,6 @@ export default function SprintBoardPage() {
       };
       setTasks((previousTasks) => [createdTask, ...previousTasks]);
       fetchSprints();
-      socket.emit("task_created", {
-        sprintId: selectedSprint.id,
-        task: createdTask,
-      });
     } catch (err: unknown) {
       if (isAxiosError(err)) {
         showToast.error(err.response?.data?.message || "Failed to create task");
@@ -523,10 +502,6 @@ export default function SprintBoardPage() {
         ),
       );
       fetchSprints();
-      socket.emit("task_updated", {
-        sprintId: selectedSprint.id,
-        task: updatedTask,
-      });
     } catch (err: unknown) {
       if (isAxiosError(err)) {
         showToast.error(err.response?.data?.message || "Failed to update task");
@@ -554,10 +529,6 @@ export default function SprintBoardPage() {
         previousTasks.filter((task) => task.id !== taskId),
       );
       fetchSprints();
-      socket.emit("task_deleted", {
-        sprintId: selectedSprint.id,
-        taskId,
-      });
     } catch (err: unknown) {
       if (isAxiosError(err)) {
         showToast.error(err.response?.data?.message || "Failed to delete task");

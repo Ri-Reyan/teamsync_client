@@ -111,11 +111,11 @@ export default function HeroSection() {
             </p>
           </div>
 
-          {/* Card 2: Real-time Socket.io */}
+          {/* Card 2: Real-time Pusher */}
           <div className="neo-border bg-white p-5 neo-shadow rotate-2 hover:rotate-0 transition-transform">
             <div className="flex items-center justify-between mb-3">
               <span className="font-black text-xs uppercase bg-[#FF6B6B] text-white px-2 py-0.5">
-                Socket.io Live
+                Pusher Live
               </span>
               <Users className="size-6 stroke-[2.5]" />
             </div>
@@ -154,7 +154,7 @@ export default function HeroSection() {
           </div>
           <div className="flex items-center gap-2 bg-white px-3 py-1 border-2 border-black">
             <CheckCircle2 className="size-4 text-[#FF6B6B] stroke-3" />
-            <span>Instant Socket Sync</span>
+            <span>Instant Pusher Sync</span>
           </div>
           <div className="flex items-center gap-2 bg-white px-3 py-1 border-2 border-black">
             <CheckCircle2 className="size-4 text-[#FF6B6B] stroke-3" />

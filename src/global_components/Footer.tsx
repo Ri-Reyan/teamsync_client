@@ -107,8 +107,8 @@ export default function Footer() {
               Architecture
             </span>
             <p className="text-xs font-bold text-black/80 leading-relaxed">
-              Powered by Next.js, Node.js, Socket.io, PostgreSQL (Prisma),
-              Redis, and Stripe Integration
+              Powered by Next.js, Node.js, Pusher, PostgreSQL (Prisma), Redis,
+              and Stripe Integration
             </p>
           </div>
         </div>
