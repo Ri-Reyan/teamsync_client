@@ -8,6 +8,7 @@ import React, {
   useEffect,
   useMemo,
   useState,
+  useCallback,
 } from "react";
 
 type AuthMode = "login" | "register";
@@ -31,13 +32,14 @@ interface AuthContextValue {
   user: User | null;
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
   loading: boolean;
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
   isAuthenticated: boolean;
   setIsAuthenticated: React.Dispatch<React.SetStateAction<boolean>>;
+  fetchCurrentUser: () => Promise<void>; // 👈 নতুন যোগ করা হয়েছে
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-// একজন ইউজার ADMIN কিনা — role আর platformRole দুই ফিল্ডই সাপোর্ট করার জন্য একটা হেল্পার
 function isAdmin(user: User | null) {
   return user?.platformRole === "ADMIN" || user?.role === "ADMIN";
 }
@@ -52,41 +54,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
 
-  // ১) /auth/me শুধু একবার, mount হওয়ার সময় কল হবে — dependency array খালি
-  useEffect(() => {
-    const fetchCurrentUser = async () => {
-      try {
-        const res = await api.get("/auth/me");
-        if (res.data && res.data.success) {
-          setUser(res.data.data || res.data.user || null);
-          setIsAuthenticated(true);
-        } else {
-          setUser(null);
-          setIsAuthenticated(false);
-        }
-      } catch {
+  // /auth/me কল করার ফাংশনটি আলাদাভাবে হ্যান্ডেল করা হলো
+  const fetchCurrentUser = useCallback(async () => {
+    try {
+      const res = await api.get("/auth/me");
+      if (res.data && res.data.success) {
+        setUser(res.data.data || res.data.user || null);
+        setIsAuthenticated(true);
+      } else {
         setUser(null);
         setIsAuthenticated(false);
-      } finally {
-        setLoading(false);
       }
-    };
-    fetchCurrentUser();
-  }, []); // 👈 খালি — শুধু একবার রান হবে
+    } catch {
+      setUser(null);
+      setIsAuthenticated(false);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  // ২) role অনুযায়ী redirect — user/pathname বদলালে রান হবে, কিন্তু loading শেষ না হওয়া পর্যন্ত কিছু করবে না
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchCurrentUser();
+  }, [fetchCurrentUser]);
+
+  // Role অনুযায়ী Redirect Logics
   useEffect(() => {
     if (loading || !isAuthenticated) return;
 
     const admin = isAdmin(user);
 
-    // ADMIN ইউজার dashboard (non-admin area) এ থাকলে admin/dashboard-এ পাঠাও
     if (admin && pathname.startsWith("/dashboard")) {
       router.replace("/admin/dashboard");
       return;
     }
 
-    // non-ADMIN ইউজার admin area-তে থাকলে dashboard-এ পাঠাও
     if (!admin && pathname.startsWith("/admin")) {
       router.replace("/dashboard");
       return;
@@ -111,17 +113,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading,
       isAuthenticated,
       setIsAuthenticated,
+      fetchCurrentUser, // 👈 Context Provider-এ পাস করা হলো
     }),
-    [authMode, authSession, isAuthModalOpen, user, loading, isAuthenticated],
+    [
+      authMode,
+      authSession,
+      isAuthModalOpen,
+      user,
+      loading,
+      isAuthenticated,
+      fetchCurrentUser,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export function useAuthModal() {
+export function useAuthModal(): AuthContextValue {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error("useAuthModal must be used inside AuthProvider");
+    throw new Error("useAuthModal must be used within an AuthProvider");
   }
   return context;
 }

@@ -7,21 +7,24 @@ import { useAuthModal } from "@/context/auth.context";
 
 export default function SSOCallbackPage() {
   const router = useRouter();
-
-  const { setIsAuthenticated } = useAuthModal();
+  const { fetchCurrentUser } = useAuthModal();
 
   useEffect(() => {
-    // Back-end httpOnly cookie সেট করে দেওয়ার পর ফ্রন্টএন্ড স্টেট রিফ্রেশ
-    router.refresh();
+    const handleSSO = async () => {
+      // ১. ব্রাউজার ব্যাকএন্ডের Set-Cookie পার্স করার জন্য ৫০০ms অপেক্ষা করা
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
-    setIsAuthenticated(true);
+      // ২. ম্যানুয়ালি /auth/me রি-ফেচ করা
+      if (fetchCurrentUser) {
+        await fetchCurrentUser();
+      }
 
-    const timer = setTimeout(() => {
-      router.push("/dashboard");
-    }, 1000);
+      // ৩. স্টেট আপডেট হওয়ার পর ড্যাশবোর্ডে রিডাইরেক্ট করা
+      router.replace("/dashboard");
+    };
 
-    return () => clearTimeout(timer);
-  }, [router, setIsAuthenticated]);
+    handleSSO();
+  }, [router, fetchCurrentUser]);
 
   return (
     <div className="flex h-screen w-full flex-col items-center justify-center bg-[#FFFDF5]">
