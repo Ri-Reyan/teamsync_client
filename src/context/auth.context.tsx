@@ -35,7 +35,7 @@ interface AuthContextValue {
   setLoading: React.Dispatch<React.SetStateAction<boolean>>;
   isAuthenticated: boolean;
   setIsAuthenticated: React.Dispatch<React.SetStateAction<boolean>>;
-  fetchCurrentUser: () => Promise<void>; // 👈 নতুন যোগ করা হয়েছে
+  fetchCurrentUser: () => Promise<boolean>; // 👈 নতুন যোগ করা হয়েছে
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -55,19 +55,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   // /auth/me কল করার ফাংশনটি আলাদাভাবে হ্যান্ডেল করা হলো
+
   const fetchCurrentUser = useCallback(async () => {
     try {
       const res = await api.get("/auth/me");
-      if (res.data && res.data.success) {
-        setUser(res.data.data || res.data.user || null);
-        setIsAuthenticated(true);
-      } else {
+
+      if (!res.data?.success) {
         setUser(null);
         setIsAuthenticated(false);
+        return false;
       }
+
+      setUser(res.data.data ?? res.data.user ?? null);
+      setIsAuthenticated(true);
+      return true;
     } catch {
       setUser(null);
       setIsAuthenticated(false);
+      return false;
     } finally {
       setLoading(false);
     }

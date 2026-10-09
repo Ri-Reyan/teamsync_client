@@ -15,12 +15,13 @@ export default function SSOCallbackPage() {
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       // ২. ম্যানুয়ালি /auth/me রি-ফেচ করা
-      if (fetchCurrentUser) {
-        await fetchCurrentUser();
-      }
+      const authenticated = await fetchCurrentUser();
 
-      // ৩. স্টেট আপডেট হওয়ার পর ড্যাশবোর্ডে রিডাইরেক্ট করা
-      router.replace("/dashboard");
+      if (authenticated) {
+        router.replace("/dashboard");
+      } else {
+        router.replace("/?authError=unauthorized");
+      }
     };
 
     handleSSO();
